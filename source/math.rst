@@ -293,7 +293,7 @@ In words,
    by the scaling factor.
 
 
-All of the above at instances of what is called the "chain rule" which
+All of the above are instances of what is called the "chain rule" which
 is applicable when you're calculating the derivative of the composition
 of two functions.
 
