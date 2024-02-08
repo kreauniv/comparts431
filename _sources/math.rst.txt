@@ -332,11 +332,10 @@ from which all the trigonometric properties naturally follow. This is using
 complex numbers (which, imo, are *simpler* than ordinary "real" numbers in many
 ways).
 
-Since we chose units for :math:`\theta` such that the length of the arc is
-:math:`r\theta`, it means the angle representing a full rotation is :math:`2\pi`,
-since the circumference of a circle is :math:`2\pi r`. 
-
-.. note:: This unit is called the "radian" and we say that the :math:`\sin` and
+.. note:: Since we chose units for :math:`\theta` such that the length of the
+   arc is :math:`r\theta`, it means the angle representing a full rotation is
+   :math:`2\pi`, since the circumference of a circle is :math:`2\pi r`. This
+   unit is called the "**radian**" and we say that the :math:`\sin` and
    :math:`\cos` functions have a period of :math:`2\pi` radians, since they
    repeat their values every time we come around full circle.
 
