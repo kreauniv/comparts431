@@ -310,6 +310,22 @@ All that is saying is that when you change :math:`x` by a little bit, then
 :math:`g` changes by :math:`g'(x)dx`. So now that change becomes the change in
 the input to :math:`f`, which will then change by :math:`f'(g(x))g'(x)dx`.
 
+If we're to write that as a program, we can write it in two ways that should
+yield approximately the same answers (subject to numerical errors).
+
+.. code-block:: python
+
+    def direct_derivative_of_composition(f, g, x, dx):
+        # To compute derivative of f(g(x)).
+        dg = g(x+dx) - g(x)
+        df = f(g(x) + dg) - f(g(x))
+        return df/dx
+
+    def chain_rule(f, g, x, dx):
+        gprime = approx_derivative(g, x, dx)
+        fprime = approx_derivative(f, g(x), dg)
+        return fprime * gprime 
+
 Basic dynamics
 --------------
 
