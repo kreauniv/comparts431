@@ -275,7 +275,7 @@ A couple of things useful to know here w.r.t. transformed functions --
 
     \begin{array}
     \frac{d}{dx}f(x-a) &=& \frac{df}{dx}(x-a) \\
-    \fra{d}{dx}(kf(x)) &=& k\frac{df}{dx}(x) \\
+    \frac{d}{dx}(kf(x)) &=& k\frac{df}{dx}(x) \\
     \frac{d}{dx}f(kx) &=& k \frac{df}{dx}(kx) \\
     \frac{d}{dx}f(x/k) &=& \frac{1}{k} \frac{df}{dx}(x/k)
     \end{array}
