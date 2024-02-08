@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Mathematical preliminaries &#8212; COMP431/ARTS431: Introduction to computer music v1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=3d3fbe02" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=cb25574f" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=b30c7235"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to Comp308: Principles of Programming Languages’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="mathematical-preliminaries">
+<h1>Mathematical preliminaries<a class="headerlink" href="#mathematical-preliminaries" title="Permalink to this heading">¶</a></h1>
+<p>While the course does not demand heavy use of math, when writing programs that
+make noises based on principles, math does become the means through which the
+sounds are constructed and understood. The basic math needed to do interesting
+things with sound and to make interesting sounds is not much and this section
+introduces you to what is needed. We may extend this a little bit through the
+course.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h2>
+<p>For our purposes, functions are expressions that calculate result values given
+one or more input values. In other words, they <em>map</em> input values to result
+values. You would’ve encountered them in grade X.</p>
+<p>If <span class="math notranslate nohighlight">\(f\)</span> is a function that calculates a result value <span class="math notranslate nohighlight">\(y\)</span> given
+input <span class="math notranslate nohighlight">\(x\)</span>, we write <span class="math notranslate nohighlight">\(y = f(x)\)</span>. Some examples are shown below.</p>
+<figure class="align-center" id="id1">
+<img alt="Some examples of functions" src="_images/fns.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Some examples of functions that take a number and compute
+another number. These are best shown as an X-Y plot.</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>In a programming language like python, you can express these functions
+is more or less the same form, apart from syntax.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">f1</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span>
+
+<span class="k">def</span> <span class="nf">f2</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span>
+
+<span class="k">def</span> <span class="nf">f3</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">f4</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span>
+</pre></div>
+</div>
+</section>
+<section id="linear-interpolation">
+<h2>Linear interpolation<a class="headerlink" href="#linear-interpolation" title="Permalink to this heading">¶</a></h2>
+<p>If I tell you that a function takes a value <span class="math notranslate nohighlight">\(y_1\)</span> at <span class="math notranslate nohighlight">\(x_1\)</span> and
+<span class="math notranslate nohighlight">\(y_2\)</span> at <span class="math notranslate nohighlight">\(x_2\)</span>, and in between <span class="math notranslate nohighlight">\(x_1\)</span> and <span class="math notranslate nohighlight">\(x_2\)</span> it looks
+like a straight line, we call it a “linear interpolation” – i.e. we’re
+expressing the value of the function in between (“inter”) <span class="math notranslate nohighlight">\(x_1\)</span> and
+<span class="math notranslate nohighlight">\(x_2\)</span> as a straight line that connect two points in the X-Y plane
+(“linear”).</p>
+<div class="math notranslate nohighlight">
+\[f(x) = y_1 + \frac{y_2 - y_1}{x_2 - x_1}(x - x_1)\]</div>
+<p>If you substitute <span class="math notranslate nohighlight">\(x = x_1\)</span>, you can see that <span class="math notranslate nohighlight">\(f(x) = y_1\)</span> and if
+you substitute <span class="math notranslate nohighlight">\(x = x_2\)</span>, you can see that <span class="math notranslate nohighlight">\(f(x) = y_1 + y_2 - y_1
+= y_2\)</span>. So it meets both end point values we stated earlier. We can also see
+that the change in <span class="math notranslate nohighlight">\(f(x)\)</span> for a given change in <span class="math notranslate nohighlight">\(x\)</span> is proportional
+to the change in <span class="math notranslate nohighlight">\(x\)</span>.</p>
+<figure class="align-center" id="id2">
+<img alt="Linear interpolation between two pairs of :math:`(x,y)` values." src="_images/linterp.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 2 </span><span class="caption-text">Linear interpolation between <span class="math notranslate nohighlight">\((x_1,y_1)\)</span> and <span class="math notranslate nohighlight">\((x_2,y_2)\)</span>.</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="common-simple-transformations-of-functions">
+<h2>Common simple transformations of functions<a class="headerlink" href="#common-simple-transformations-of-functions" title="Permalink to this heading">¶</a></h2>
+<p>Given a function <span class="math notranslate nohighlight">\(f(x)\)</span>, we can make a related family of functions by
+stretching, shrinking, reflecting and moving it up or down along the two axes.</p>
+<figure class="align-center" id="id3">
+<img alt="Some commonly used simple transformations of functions." src="_images/fntx.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 3 </span><span class="caption-text">Given a function <span class="math notranslate nohighlight">\(y= x^2\)</span>, we can generate variations by stretching,
+shrinking, reflecting and moving it up or down quite easily.</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<section id="shifting-a-function-to-another-point-along-the-x-axis">
+<h3>Shifting a function to another point along the x axis<a class="headerlink" href="#shifting-a-function-to-another-point-along-the-x-axis" title="Permalink to this heading">¶</a></h3>
+<p>Suppose we have a function <span class="math notranslate nohighlight">\(f(x)\)</span> given and we want to determine
+another function <span class="math notranslate nohighlight">\(g(x)\)</span> whose picture is basically the same as
+that of <span class="math notranslate nohighlight">\(f(x)\)</span>, but shifted <span class="math notranslate nohighlight">\(a\)</span> units to the right, can we
+express <span class="math notranslate nohighlight">\(g(x)\)</span> in terms of <span class="math notranslate nohighlight">\(f(x)\)</span>? This forms a simple
+relationship that we’ll need pretty heavily through this course
+as we write our programs that shift sound in time or frequency.</p>
+<p>The relationship between <span class="math notranslate nohighlight">\(f\)</span> and <span class="math notranslate nohighlight">\(g\)</span> is simply this –</p>
+<div class="math notranslate nohighlight">
+\[g(x) = f(x - a)\]</div>
+<p>So if you’re given <span class="math notranslate nohighlight">\(f(x) = x^2\)</span> and you want to move the parabola
+rightwards by <span class="math notranslate nohighlight">\(3\)</span> units, you simply write <span class="math notranslate nohighlight">\(g(x) = (x-3)^2\)</span>.</p>
+</section>
+<section id="shifting-a-function-up-or-down-the-y-axis">
+<h3>Shifting a function up or down the y axis<a class="headerlink" href="#shifting-a-function-up-or-down-the-y-axis" title="Permalink to this heading">¶</a></h3>
+<p>To shift a function <span class="math notranslate nohighlight">\(f(x)\)</span> by an amount <span class="math notranslate nohighlight">\(a\)</span> up the y-axis, you
+simply add <span class="math notranslate nohighlight">\(a\)</span> to it.</p>
+<div class="math notranslate nohighlight">
+\[g(x) = f(x) + a\]</div>
+</section>
+<section id="reflecting-a-function-around-the-x-and-y-axes">
+<h3>Reflecting a function around the x and y axes<a class="headerlink" href="#reflecting-a-function-around-the-x-and-y-axes" title="Permalink to this heading">¶</a></h3>
+<p>Given an <span class="math notranslate nohighlight">\(f(x)\)</span>, if you want to make a <span class="math notranslate nohighlight">\(g(x)\)</span> whose
+picture is the same as that of <span class="math notranslate nohighlight">\(f(x)\)</span> but mirrored around
+the y-axis, you simply do this –</p>
+<div class="math notranslate nohighlight">
+\[g(x) = f(-x)\]</div>
+<p>Reflecting about the x-axis is simply a negation –</p>
+<div class="math notranslate nohighlight">
+\[g(x) = -f(x)\]</div>
+</section>
+<section id="stretching-and-shrinking-a-function">
+<h3>Stretching and shrinking a function<a class="headerlink" href="#stretching-and-shrinking-a-function" title="Permalink to this heading">¶</a></h3>
+<p>If you want to stretch or shrink a function along the y-axis without
+changing it in the x direction, you just need to multiply (i.e. “scale”)
+it by a constant value <span class="math notranslate nohighlight">\(a\)</span>. If <span class="math notranslate nohighlight">\(0 &lt; a &lt; 1\)</span>, the picture
+will shrink in the y direction and if <span class="math notranslate nohighlight">\(a &gt; 1\)</span>, the picture will
+stretch in the y direction.</p>
+<div class="math notranslate nohighlight">
+\[g(x) = a f(x)\]</div>
+<p>If you want to stretch a function in the x-direction by a factor <span class="math notranslate nohighlight">\(a\)</span>,
+you can do this –</p>
+<div class="math notranslate nohighlight">
+\[g(x) = f(\frac{x}{a})\]</div>
+<p>If <span class="math notranslate nohighlight">\(a &gt; 1\)</span>, you’ll get <span class="math notranslate nohighlight">\(g\)</span>’s picture to be a horizontally
+stretched version of <span class="math notranslate nohighlight">\(f\)</span>’s picture. If <span class="math notranslate nohighlight">\(0 &lt; a &lt; 1\)</span>, you’ll get
+<span class="math notranslate nohighlight">\(g\)</span>’s picture to be compressed/shrunk version of <span class="math notranslate nohighlight">\(f\)</span>’s picture
+along the x direction.</p>
+</section>
+</section>
+<section id="basic-calculus-useful-for-this-course">
+<h2>Basic calculus useful for this course<a class="headerlink" href="#basic-calculus-useful-for-this-course" title="Permalink to this heading">¶</a></h2>
+<p>We won’t need to deal with calculus in the mathematically rigorous/onerous
+sense (depending on your perception). We’ll however need an intuitive grasp
+that’s sufficient for us to write programs that make use of calculus
+principles. This section introduces what you need, and only what you need.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>I’ll be appealing to your intuition at times. In case that appeal
+turns out to be unworkable, let me know and I’ll help you through it and
+revise the material appropriately.</p>
+</div>
+<div class="admonition-key-idea-behind-calculus admonition">
+<p class="admonition-title">Key idea behind calculus</p>
+<p>Calculus is based on the observation that if you look at a small part of a
+smooth curve with a magnifying glass, it will look roughly like a straight
+line.</p>
+</div>
+<figure class="align-center" id="id4">
+<img alt="Calculus is based on local linear approximation of functions." src="_images/calculus1.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 4 </span><span class="caption-text">Calculus is based on local linear approximation of functions.</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>Notation-wise, when we write <span class="math notranslate nohighlight">\(dx\)</span>, we mean “a little bit of x”. So in the
+figure above, the ratio <span class="math notranslate nohighlight">\(\frac{dy}{dx}\)</span> is the ratio of the little bit of
+change in <span class="math notranslate nohighlight">\(y\)</span> (<span class="math notranslate nohighlight">\(dy\)</span>) produced by a little bit of change in
+<span class="math notranslate nohighlight">\(x\)</span> (<span class="math notranslate nohighlight">\(dx\)</span>). This ratio is called the “derivative of <span class="math notranslate nohighlight">\(y\)</span>
+with respect to <span class="math notranslate nohighlight">\(x\)</span>”. The derivative captures the idea of the rate of
+change of one quantity w.r.t. another quantity it depends on.</p>
+<p>For example, consider the function <span class="math notranslate nohighlight">\(f(x) = x^2 - 3x\)</span>. If we want to
+determine by how much <span class="math notranslate nohighlight">\(f\)</span> changes when we change <span class="math notranslate nohighlight">\(x\)</span> by “a little bit”
+<span class="math notranslate nohighlight">\(dx\)</span>, we’re interested in <span class="math notranslate nohighlight">\(df\)</span> where <span class="math notranslate nohighlight">\(f(x+dx) = f(x) + df\)</span>.</p>
+<p>For our given function,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}
+ f(x+dx) &amp;=&amp; (x+dx)^2 - 3(x+dx) \\
+ &amp;=&amp; x^2 + (2x)dx + dx^2 - 3x - 3dx \\
+ &amp;=&amp; x^2 - 3x + (2x-3)dx
+\end{array}\end{split}\]</div>
+<p>That means, <span class="math notranslate nohighlight">\(df = (2x-3)dx\)</span> and so <span class="math notranslate nohighlight">\(df/dx = 2x-3\)</span>. Here, we’re
+ignoring <span class="math notranslate nohighlight">\(dx^2\)</span> because it is too small for us to pay attention to – it
+is a tiny fraction of a little bit of <span class="math notranslate nohighlight">\(x\)</span>!!</p>
+<p>This calculation is easily translated into a python program as follows –</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">approx_derivative</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">dx</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">dx</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">/</span> <span class="n">dx</span>
+</pre></div>
+</div>
+<p>Going the other way, if we add lots of “little bits of <span class="math notranslate nohighlight">\(x\)</span>” together,
+we expect to get …. <span class="math notranslate nohighlight">\(x\)</span>!! This computation of “adding lots of little
+bits of a quantity” is called the “integral”. If you think of the integral
+as an elongated “S” for “summation”, we can write -</p>
+<div class="math notranslate nohighlight">
+\[\int_{x_1}^{x_2}dx = x_2 - x_1\]</div>
+<p>Above, we’re adding all the little bits of <span class="math notranslate nohighlight">\(x\)</span> between <span class="math notranslate nohighlight">\(x_1\)</span> and
+<span class="math notranslate nohighlight">\(x_2\)</span>. Since we’ve accounted for everything between <span class="math notranslate nohighlight">\(x_1\)</span> and
+<span class="math notranslate nohighlight">\(x_2\)</span> by doing that, what we have at hand at the end is simply <span class="math notranslate nohighlight">\(x_2
+- x_1\)</span>.</p>
+<p>Similarly, if we have <span class="math notranslate nohighlight">\(f(x) = x^2\)</span> and we want to add up all the little bits
+of f (i.e. <span class="math notranslate nohighlight">\(df\)</span>) corresponding to the little bits of <span class="math notranslate nohighlight">\(x\)</span> between
+<span class="math notranslate nohighlight">\(x_1\)</span> and <span class="math notranslate nohighlight">\(x_2\)</span>, we expect to get <span class="math notranslate nohighlight">\(f(x_2) - f(x_1) = x_2^2 - x_1^2\)</span>.</p>
+<div class="math notranslate nohighlight">
+\[\int_{x_1}^{x_2}df = f(x_2) - f(x_1)\]</div>
+<p>Since we know <span class="math notranslate nohighlight">\(df = 2xdx\)</span>, we have –</p>
+<div class="math notranslate nohighlight">
+\[\int_{x_1}^{x_2}2xdx = {x_2}^2 - {x_1}^2\]</div>
+<p>If we wish to not pay attention to the two points between which we’re summing
+up the little bits of <span class="math notranslate nohighlight">\(f\)</span>, we can be sloppy and write the same thing this
+way –</p>
+<div class="math notranslate nohighlight">
+\[\int{2xdx} = x^2\]</div>
+<p>To put it a bit more generally,</p>
+<div class="math notranslate nohighlight">
+\[\int_{x_1}^{x_2}\frac{df}{dx}dx = \int_{x_1}^{x_2}df = f(x_2) - f(x_1)\]</div>
+<p>Conversely to the derivative, the integral can be written as a summation loop
+in python.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">approx_integral</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">dx</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span><span class="n">x2</span><span class="p">,</span><span class="n">dx</span><span class="p">):</span>
+        <span class="c1"># Add up the little bits of changes</span>
+        <span class="c1"># described by the rate f(x).</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">result</span> <span class="o">+</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">dx</span>
+    <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+</div>
+</section>
+<section id="derivatives-of-transformed-functions">
+<h2>Derivatives of transformed functions<a class="headerlink" href="#derivatives-of-transformed-functions" title="Permalink to this heading">¶</a></h2>
+<p>A couple of things useful to know here w.r.t. transformed functions –</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}
+\frac{d}{dx}f(x-a) &amp;=&amp; \frac{df}{dx}(x-a) \\
+\fra{d}{dx}(kf(x)) &amp;=&amp; k\frac{df}{dx}(x) \\
+\frac{d}{dx}f(kx) &amp;=&amp; k \frac{df}{dx}(kx) \\
+\frac{d}{dx}f(x/k) &amp;=&amp; \frac{1}{k} \frac{df}{dx}(x/k)
+\end{array}\end{split}\]</div>
+<p>In words,</p>
+<ol class="arabic simple">
+<li><p>The derivative of a shifted function is the same as the derivative of the
+original function at the shifted position.</p></li>
+<li><p>The derivative of a function scaled in the y axis is the same as the
+derivative of the function scaled by the same factor.</p></li>
+<li><p>The derivative of a function scaled in the x direction is the same
+as the derivative of the function at the scaled position, divided
+by the scaling factor.</p></li>
+</ol>
+</section>
+<section id="basic-dynamics">
+<h2>Basic dynamics<a class="headerlink" href="#basic-dynamics" title="Permalink to this heading">¶</a></h2>
+<p>Calculus is most useful to represent, understand and calculate things
+about motion - i.e. dynamics.</p>
+<p>For something moving at a constant velocity <span class="math notranslate nohighlight">\(v\)</span>, its dynamics are
+represented using <span class="math notranslate nohighlight">\(dx = v dt\)</span>. All that is saying is that when a little
+bit of time elapses, the position changes by a little bit that is proportional
+to the elapsed time by a constant factor <span class="math notranslate nohighlight">\(v\)</span>. If you let this <span class="math notranslate nohighlight">\(v\)</span>
+vary with time, then we have a system whose velocity is changing with time.
+In that case, we have <span class="math notranslate nohighlight">\(dx = v(t)dt\)</span>.</p>
+<p>One may then also ask “how do we describe <span class="math notranslate nohighlight">\(v\)</span> changing with time?”.
+If <span class="math notranslate nohighlight">\(v\)</span> is itself changing at a constant rate <span class="math notranslate nohighlight">\(a\)</span>, we write
+<span class="math notranslate nohighlight">\(dv = a dt\)</span>.</p>
+</section>
+<section id="basic-trigonometric-functions">
+<h2>Basic trigonometric functions<a class="headerlink" href="#basic-trigonometric-functions" title="Permalink to this heading">¶</a></h2>
+<p>We need a few things from trigonometry because the “sinusoidal functions”
+play a basic role in construction of sound from more elementary sounds.</p>
+<p>The two most basic functions are, as you know, <span class="math notranslate nohighlight">\(\cos \theta\)</span> and
+<span class="math notranslate nohighlight">\(\sin \theta\)</span>, where <span class="math notranslate nohighlight">\(\theta\)</span> is an angle in “radians”.</p>
+<figure class="align-center" id="id5">
+<img alt="Basic trigonometric functions" src="_images/trig1.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 5 </span><span class="caption-text">The basic trignonometric functions <span class="math notranslate nohighlight">\(\sin \theta\)</span> and <span class="math notranslate nohighlight">\(\cos
+\theta\)</span>.</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>In the picture above, we’ve related the two functions to a point along a circle
+of radius <span class="math notranslate nohighlight">\(r\)</span> at an angle of <span class="math notranslate nohighlight">\(\theta\)</span> w.r.t. the <span class="math notranslate nohighlight">\(x\)</span> axis.
+There is a simple way to represent this “point on a circle of radius <span class="math notranslate nohighlight">\(r\)</span>”
+from which all the trigonometric properties naturally follow. This is using
+complex numbers (which, imo, are <em>simpler</em> than ordinary “real” numbers in many
+ways).</p>
+<p>Since we chose units for <span class="math notranslate nohighlight">\(\theta\)</span> such that the length of the arc is
+<span class="math notranslate nohighlight">\(r\theta\)</span>, it means the angle representing a full rotation is <span class="math notranslate nohighlight">\(2\pi\)</span>,
+since the circumference of a circle is <span class="math notranslate nohighlight">\(2\pi r\)</span>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This unit is called the “radian” and we say that the <span class="math notranslate nohighlight">\(\sin\)</span> and
+<span class="math notranslate nohighlight">\(\cos\)</span> functions have a period of <span class="math notranslate nohighlight">\(2\pi\)</span> radians, since they
+repeat their values every time we come around full circle.</p>
+</div>
+<p>If we represent the point on the circle as the complex number <span class="math notranslate nohighlight">\(x + iy\)</span>,
+then since <span class="math notranslate nohighlight">\(x = r\cos \theta\)</span> and <span class="math notranslate nohighlight">\(y = r\sin \theta\)</span>, we have
+<span class="math notranslate nohighlight">\(x+iy = r\cos \theta + ir\sin \theta = r(\cos\theta + i\sin\theta)\)</span>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A complex numer <span class="math notranslate nohighlight">\(x+iy\)</span> can represent a point on the X-Y plane.
+The <span class="math notranslate nohighlight">\(i\)</span> has the property <span class="math notranslate nohighlight">\(i^2 = -1\)</span>. This means <span class="math notranslate nohighlight">\((a+ib) +
+(c+id) = (a+c)+i(b+d)\)</span>, and <span class="math notranslate nohighlight">\((a+ib)(c+id) = (ac-bd) + i(ad+bc)\)</span>.</p>
+</div>
+<p>To “rotate” a point about the origin by <span class="math notranslate nohighlight">\(\phi\)</span>, you take the complex
+number representation of the position of the point and multiply it by
+<span class="math notranslate nohighlight">\(\cos\phi + i\sin\phi\)</span>. So you see that <span class="math notranslate nohighlight">\(i\)</span> represents a
+rotation by <span class="math notranslate nohighlight">\(90\)</span> degrees.</p>
+<p>So if you have a point on the circle of radius <span class="math notranslate nohighlight">\(1\)</span> (“circle of unit radius”
+or “unit circle”) at an angle of <span class="math notranslate nohighlight">\(\theta\)</span>, and you want to move it further
+by an angle <span class="math notranslate nohighlight">\(\phi\)</span>, then the final angle will be <span class="math notranslate nohighlight">\(\theta + \phi\)</span>,
+but according to our complex number multiplication rule,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{rcl}
+\text{pos}(\theta + \phi) &amp;=&amp; (\cos\phi+i\sin\phi)\text{pos}(\theta) \\
+&amp;=&amp; (\cos\phi + i\sin\phi)(\cos\theta+i\sin\theta) \\
+&amp;=&amp; (\cos\phi\cos\theta - \sin\phi\sin\theta) + i(\cos\phi\sin\theta+\sin\phi\cos\theta)
+\end{array}\end{split}\]</div>
+<p>So we see that -</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{rcl}
+\\cos(\phi+\theta) + i\sin(\phi+\theta)
+&amp;=&amp; (\cos\phi\cos\theta - \sin\phi\sin\theta) + i(\cos\phi\sin\theta+\sin\phi\cos\theta) \\
+\cos(\phi+\theta) &amp;=&amp; \cos\phi\cos\theta - \sin\phi\sin\theta \\
+\sin(\phi+\theta) &amp;=&amp; \cos\phi\sin\theta + \sin\phi\cos\theta
+\end{array}\end{split}\]</div>
+<p>I won’t say that this is an “explanation”, but this is the easiest way I know
+to work out the trigonometric identities for yourself when in need.</p>
+</section>
+<section id="how-does-the-position-change-w-r-t-theta">
+<h2>How does the position change w.r.t. <span class="math notranslate nohighlight">\(\theta\)</span>?<a class="headerlink" href="#how-does-the-position-change-w-r-t-theta" title="Permalink to this heading">¶</a></h2>
+<p>Given <span class="math notranslate nohighlight">\(\text{pos}(r,\theta) = r(\cos\theta + i\sin\theta)\)</span>, if we change
+<span class="math notranslate nohighlight">\(\theta\)</span> by a “little bit of <span class="math notranslate nohighlight">\(\theta\)</span>” that we’ll call
+<span class="math notranslate nohighlight">\(d\theta\)</span>, we end up at <span class="math notranslate nohighlight">\(\text{pos}(r,\theta+d\theta) =
+r(\cos(\theta+d\theta) + i\sin(\theta+d\theta))\)</span>. We also see that
+<span class="math notranslate nohighlight">\(\cos(d\theta) = 1\)</span> and <span class="math notranslate nohighlight">\(\sin(d\theta) = d\theta\)</span> to a first
+approximation – i.e. ignoring “tiny fractions of little bit of
+<span class="math notranslate nohighlight">\(\theta\)</span>”.</p>
+<p>If we then expand that using what we saw before,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{rcl}
+\\cos(\theta+d\theta) &amp;=&amp; \cos\theta\cos(d\theta)-\sin\theta\sin(d\theta) \\
+&amp;=&amp; \cos\theta + (-\sin\theta) d\theta \\
+\sin(\theta+d\theta) &amp;=&amp; \sin\theta\cos(d\theta) + \cos\theta\sin(d\theta) \\
+&amp;=&amp; \sin\theta + (\cos\theta)d\theta
+\end{array}\end{split}\]</div>
+<p>So, using our <span class="math notranslate nohighlight">\(f(x+dx) = f(x) + df\)</span>, we see the following –</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{rcl}
+\frac{d}{d\theta}\cos\theta &amp;=&amp; -\sin\theta \\
+\frac{d}{d\theta}\sin\theta &amp;=&amp; \cos\theta
+\end{array}\end{split}\]</div>
+<figure class="align-center" id="id6">
+<img alt="Rotating by a little bit of :math:`\theta` (i.e. by :math:`d\theta`)." src="_images/drtheta.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 6 </span><span class="caption-text">Rotating by a little bit of <span class="math notranslate nohighlight">\(\theta\)</span>.</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">COMP431/ARTS431: Introduction to computer music</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Mathematical preliminaries</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#linear-interpolation">Linear interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#common-simple-transformations-of-functions">Common simple transformations of functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basic-calculus-useful-for-this-course">Basic calculus useful for this course</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#derivatives-of-transformed-functions">Derivatives of transformed functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basic-dynamics">Basic dynamics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basic-trigonometric-functions">Basic trigonometric functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-does-the-position-change-w-r-t-theta">How does the position change w.r.t. <span class="math notranslate nohighlight">\(\theta\)</span>?</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to Comp308: Principles of Programming Languages’s documentation!</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Srikumar K. S..
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/math.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
