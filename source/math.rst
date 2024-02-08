@@ -269,7 +269,7 @@ in python.
 Derivatives of transformed functions
 ------------------------------------
 
-A couple of things useful to know here w.r.t. transformed functions --
+A few things useful to know here w.r.t. transformed functions --
 
 .. math::
 
@@ -292,6 +292,24 @@ In words,
    as the derivative of the function at the scaled position, divided
    by the scaling factor.
 
+
+All of the above at instances of what is called the "chain rule" which
+is applicable when you're calculating the derivative of the composition
+of two functions.
+
+.. math::
+
+    \begin{array}{rcl}
+    df(g(x)) &=& f'(g(x)) g'(x) dx
+    \end{array}
+
+.. note:: The notation :math:`f'(x)` is sometimes useful to denote the
+   derivative of :math:`f` w.r.t. its argument.
+
+All that is saying is that when you change :math:`x` by a little bit, then
+:math:`g` changes by :math:`g'(x)dx`. So now that change becomes the change in
+the input to :math:`f`, which will then change by :math:`f'(g(x))g'(x)dx`.
+
 Basic dynamics
 --------------
 
@@ -305,9 +323,70 @@ to the elapsed time by a constant factor :math:`v`. If you let this :math:`v`
 vary with time, then we have a system whose velocity is changing with time.
 In that case, we have :math:`dx = v(t)dt`.
 
+So when you have a known function :math:`v(t)`, you can calculate the
+position of the entity given a starting position at :math:`t = 0` using
+the following program -- which basically adds up all the little bits
+of changes to the position to arrive at the final position.
+
+.. code-block:: python
+    
+    def approx_position(v, t, dt, x0):
+        x = x0
+        for tstep in range(0, t, dt):
+            x = x + v(t) * dt
+        return x
+
 One may then also ask "how do we describe :math:`v` changing with time?".
 If :math:`v` is itself changing at a constant rate :math:`a`, we write
-:math:`dv = a dt`.
+:math:`dv = a dt`. For such a system, to find out where it will be at a given
+point in time, we need to know both its starting position *and* its
+starting velocity. We can use a similar approach to find out the approximate
+position in this case too, as shown below --
+
+.. code-block:: python
+    
+    def approx_position(a, t, dt, x0, v0):
+        x = x0
+        v = v0
+        for tstep in range(0, t, dt):
+            # The current velocity is v, so x changes a little bit.
+            x = x + v * dt
+            # The current acceleration is a(t), and so the velocity also
+            # changes a little bit a little later.
+            v = v + a(t) * dt
+        return x
+
+One interesting case is a system that behaves according to :math:`dx/dt = kx`
+for some constant :math:`k`. In this system, the speed with which :math:`x`
+changes, is proportional to where it is. If you try and plot such a system by
+stepping through in "little bits of :math:`x`", you'll find that for positive
+values of :math:`k`, the position very quickly increases enormously and for
+negative values of :math:`k`, it always reduces quickly to :math:`0`.
+
+The solution of that dynamical equation is the "exponential function" --
+:math:`x = e^{kt}`. To an approximation, you can calculate this function
+by adding up little bits of :math:`x` like this --
+
+.. code-block:: python
+
+    def approx_exponential(t, k, dt):
+        x = 1.0 # The value at t = 0 is 1.0
+        for tstep in range(0.0, t, dt):
+            # add all the little bits of changes
+            # to x according to dx = kx dt
+            x = x + k * x * dt
+        return x
+
+.. note:: The above code is for illustration only and we wouldn't want to
+   calculate the exponential function this way due to possible numerical errors
+   and running time costs. There are better ways, but the above code
+   illustrates the principle behind it.
+
+If :math:`y = e^x`, how do you get :math:`x` given :math:`y`? That function is
+called the "natural logarithm" and we write :math:`x = \ln y = \log_e{x}`. The
+:math:`\ln` is to be read as "natural logarithm" and is sometimes pronounced
+"lawn". In code, when we write :code:`log`, we actual mean "natural logarithm"
+as well.
 
 Basic trigonometric functions
 -----------------------------
@@ -341,7 +420,7 @@ ways).
 
 If we represent the point on the circle as the complex number :math:`x + iy`,
 then since :math:`x = r\cos \theta` and :math:`y = r\sin \theta`, we have
-:math:`x+iy = r\cos \theta + ir\sin \theta = r(\cos\theta + i\sin\theta)`.
+:math:`x+iy = r\cos \theta + ir\sin \theta = r(\cos\theta + i\sin\theta) = r e^{i\theta}`.
 
 .. note:: A complex numer :math:`x+iy` can represent a point on the X-Y plane.
    The :math:`i` has the property :math:`i^2 = -1`. This means :math:`(a+ib) +
