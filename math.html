@@ -227,11 +227,11 @@ way –</p>
 <p>To put it a bit more generally,</p>
 <div class="math notranslate nohighlight">
 \[\int_{x_1}^{x_2}\frac{df}{dx}dx = \int_{x_1}^{x_2}df = f(x_2) - f(x_1)\]</div>
-<p>Conversely to the derivative, the integral can be written as a summation loop
-in python.</p>
+<p>Conversely to the derivative, the integral <span class="math notranslate nohighlight">\(\int_{x_1}^{x_2}f(x)dx\)</span> can
+be written as a summation loop in python.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">approx_integral</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">dx</span><span class="p">):</span>
     <span class="n">result</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span><span class="n">x2</span><span class="p">,</span><span class="n">dx</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span><span class="n">x2</span><span class="p">,</span><span class="n">dx</span><span class="p">):</span>
         <span class="c1"># Add up the little bits of changes</span>
         <span class="c1"># described by the rate f(x).</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">result</span> <span class="o">+</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">dx</span>
@@ -291,8 +291,8 @@ the following program – which basically adds up all the little bits
 of changes to the position to arrive at the final position.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">approx_position</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">x0</span><span class="p">):</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span>
-    <span class="k">for</span> <span class="n">tstep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
+    <span class="k">for</span> <span class="n">tstep</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">v</span><span class="p">(</span><span class="n">tstep</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
     <span class="k">return</span> <span class="n">x</span>
 </pre></div>
 </div>
@@ -305,12 +305,12 @@ position in this case too, as shown below –</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">approx_position</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">v0</span><span class="p">):</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span>
     <span class="n">v</span> <span class="o">=</span> <span class="n">v0</span>
-    <span class="k">for</span> <span class="n">tstep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">tstep</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
         <span class="c1"># The current velocity is v, so x changes a little bit.</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">dt</span>
         <span class="c1"># The current acceleration is a(t), and so the velocity also</span>
         <span class="c1"># changes a little bit a little later.</span>
-        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="n">tstep</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
     <span class="k">return</span> <span class="n">x</span>
 </pre></div>
 </div>
@@ -325,7 +325,7 @@ negative values of <span class="math notranslate nohighlight">\(k\)</span>, it a
 by adding up little bits of <span class="math notranslate nohighlight">\(x\)</span> like this –</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">approx_exponential</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
     <span class="n">x</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="c1"># The value at t = 0 is 1.0</span>
-    <span class="k">for</span> <span class="n">tstep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">tstep</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
         <span class="c1"># add all the little bits of changes</span>
         <span class="c1"># to x according to dx = kx dt</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">dt</span>

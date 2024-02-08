@@ -253,14 +253,14 @@ To put it a bit more generally,
     \int_{x_1}^{x_2}\frac{df}{dx}dx = \int_{x_1}^{x_2}df = f(x_2) - f(x_1)
 
 
-Conversely to the derivative, the integral can be written as a summation loop
-in python.
+Conversely to the derivative, the integral :math:`\int_{x_1}^{x_2}f(x)dx` can
+be written as a summation loop in python.
 
 .. code-block:: python
 
     def approx_integral(f, x1, x2, dx):
         result = 0.0
-        for x in range(x1,x2,dx):
+        for x in arange(x1,x2,dx):
             # Add up the little bits of changes 
             # described by the rate f(x).
             result = result + f(x) * dx
@@ -332,8 +332,8 @@ of changes to the position to arrive at the final position.
     
     def approx_position(v, t, dt, x0):
         x = x0
-        for tstep in range(0, t, dt):
-            x = x + v(t) * dt
+        for tstep in arange(0, t, dt):
+            x = x + v(tstep) * dt
         return x
 
 One may then also ask "how do we describe :math:`v` changing with time?".
@@ -348,12 +348,12 @@ position in this case too, as shown below --
     def approx_position(a, t, dt, x0, v0):
         x = x0
         v = v0
-        for tstep in range(0, t, dt):
+        for tstep in arange(0, t, dt):
             # The current velocity is v, so x changes a little bit.
             x = x + v * dt
             # The current acceleration is a(t), and so the velocity also
             # changes a little bit a little later.
-            v = v + a(t) * dt
+            v = v + a(tstep) * dt
         return x
 
 One interesting case is a system that behaves according to :math:`dx/dt = kx`
@@ -371,7 +371,7 @@ by adding up little bits of :math:`x` like this --
 
     def approx_exponential(t, k, dt):
         x = 1.0 # The value at t = 0 is 1.0
-        for tstep in range(0.0, t, dt):
+        for tstep in arange(0.0, t, dt):
             # add all the little bits of changes
             # to x according to dx = kx dt
             x = x + k * x * dt
