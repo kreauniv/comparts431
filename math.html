@@ -274,6 +274,20 @@ derivative of <span class="math notranslate nohighlight">\(f\)</span> w.r.t. its
 <p>All that is saying is that when you change <span class="math notranslate nohighlight">\(x\)</span> by a little bit, then
 <span class="math notranslate nohighlight">\(g\)</span> changes by <span class="math notranslate nohighlight">\(g'(x)dx\)</span>. So now that change becomes the change in
 the input to <span class="math notranslate nohighlight">\(f\)</span>, which will then change by <span class="math notranslate nohighlight">\(f'(g(x))g'(x)dx\)</span>.</p>
+<p>If we’re to write that as a program, we can write it in two ways that should
+yield approximately the same answers (subject to numerical errors).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">direct_derivative_of_composition</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">):</span>
+    <span class="c1"># To compute derivative of f(g(x)).</span>
+    <span class="n">dg</span> <span class="o">=</span> <span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="o">+</span><span class="n">dx</span><span class="p">)</span> <span class="o">-</span> <span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">dg</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">/</span><span class="n">dx</span>
+
+<span class="k">def</span> <span class="nf">chain_rule</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">):</span>
+    <span class="n">gprime</span> <span class="o">=</span> <span class="n">approx_derivative</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="p">)</span>
+    <span class="n">fprime</span> <span class="o">=</span> <span class="n">approx_derivative</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">dg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fprime</span> <span class="o">*</span> <span class="n">gprime</span>
+</pre></div>
+</div>
 </section>
 <section id="basic-dynamics">
 <h2>Basic dynamics<a class="headerlink" href="#basic-dynamics" title="Permalink to this heading">¶</a></h2>
