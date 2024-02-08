@@ -1,10 +1,10 @@
-.. Comp308: Principles of Programming Languages documentation master file, created by
+.. COMP431/ARTS431: Introduction to computer music documentation master file, created by
    sphinx-quickstart on Thu Aug 11 19:14:08 2022.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Comp308: Principles of Programming Languages's documentation!
-========================================================================
+Welcome to COMP431/ARTS431: Introduction to computer music
+==========================================================
 
 .. toctree::
    :maxdepth: 2
