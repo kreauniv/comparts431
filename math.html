@@ -241,7 +241,7 @@ in python.</p>
 </section>
 <section id="derivatives-of-transformed-functions">
 <h2>Derivatives of transformed functions<a class="headerlink" href="#derivatives-of-transformed-functions" title="Permalink to this heading">¶</a></h2>
-<p>A couple of things useful to know here w.r.t. transformed functions –</p>
+<p>A few things useful to know here w.r.t. transformed functions –</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{array}{rcl}
 \frac{d}{dx}f(x-a) &amp;=&amp; \frac{df}{dx}(x-a) \\
@@ -259,6 +259,21 @@ derivative of the function scaled by the same factor.</p></li>
 as the derivative of the function at the scaled position, divided
 by the scaling factor.</p></li>
 </ol>
+<p>All of the above at instances of what is called the “chain rule” which
+is applicable when you’re calculating the derivative of the composition
+of two functions.</p>
+<div class="math notranslate nohighlight">
+\[\begin{array}{rcl}
+df(g(x)) &amp;=&amp; f'(g(x)) g'(x) dx
+\end{array}\]</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The notation <span class="math notranslate nohighlight">\(f'(x)\)</span> is sometimes useful to denote the
+derivative of <span class="math notranslate nohighlight">\(f\)</span> w.r.t. its argument.</p>
+</div>
+<p>All that is saying is that when you change <span class="math notranslate nohighlight">\(x\)</span> by a little bit, then
+<span class="math notranslate nohighlight">\(g\)</span> changes by <span class="math notranslate nohighlight">\(g'(x)dx\)</span>. So now that change becomes the change in
+the input to <span class="math notranslate nohighlight">\(f\)</span>, which will then change by <span class="math notranslate nohighlight">\(f'(g(x))g'(x)dx\)</span>.</p>
 </section>
 <section id="basic-dynamics">
 <h2>Basic dynamics<a class="headerlink" href="#basic-dynamics" title="Permalink to this heading">¶</a></h2>
@@ -270,9 +285,65 @@ bit of time elapses, the position changes by a little bit that is proportional
 to the elapsed time by a constant factor <span class="math notranslate nohighlight">\(v\)</span>. If you let this <span class="math notranslate nohighlight">\(v\)</span>
 vary with time, then we have a system whose velocity is changing with time.
 In that case, we have <span class="math notranslate nohighlight">\(dx = v(t)dt\)</span>.</p>
+<p>So when you have a known function <span class="math notranslate nohighlight">\(v(t)\)</span>, you can calculate the
+position of the entity given a starting position at <span class="math notranslate nohighlight">\(t = 0\)</span> using
+the following program – which basically adds up all the little bits
+of changes to the position to arrive at the final position.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">approx_position</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">x0</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span>
+    <span class="k">for</span> <span class="n">tstep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
+    <span class="k">return</span> <span class="n">x</span>
+</pre></div>
+</div>
 <p>One may then also ask “how do we describe <span class="math notranslate nohighlight">\(v\)</span> changing with time?”.
 If <span class="math notranslate nohighlight">\(v\)</span> is itself changing at a constant rate <span class="math notranslate nohighlight">\(a\)</span>, we write
-<span class="math notranslate nohighlight">\(dv = a dt\)</span>.</p>
+<span class="math notranslate nohighlight">\(dv = a dt\)</span>. For such a system, to find out where it will be at a given
+point in time, we need to know both its starting position <em>and</em> its
+starting velocity. We can use a similar approach to find out the approximate
+position in this case too, as shown below –</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">approx_position</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">v0</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">v0</span>
+    <span class="k">for</span> <span class="n">tstep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="c1"># The current velocity is v, so x changes a little bit.</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">dt</span>
+        <span class="c1"># The current acceleration is a(t), and so the velocity also</span>
+        <span class="c1"># changes a little bit a little later.</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
+    <span class="k">return</span> <span class="n">x</span>
+</pre></div>
+</div>
+<p>One interesting case is a system that behaves according to <span class="math notranslate nohighlight">\(dx/dt = kx\)</span>
+for some constant <span class="math notranslate nohighlight">\(k\)</span>. In this system, the speed with which <span class="math notranslate nohighlight">\(x\)</span>
+changes, is proportional to where it is. If you try and plot such a system by
+stepping through in “little bits of <span class="math notranslate nohighlight">\(x\)</span>”, you’ll find that for positive
+values of <span class="math notranslate nohighlight">\(k\)</span>, the position very quickly increases enormously and for
+negative values of <span class="math notranslate nohighlight">\(k\)</span>, it always reduces quickly to <span class="math notranslate nohighlight">\(0\)</span>.</p>
+<p>The solution of that dynamical equation is the “exponential function” –
+<span class="math notranslate nohighlight">\(x = e^{kt}\)</span>. To an approximation, you can calculate this function
+by adding up little bits of <span class="math notranslate nohighlight">\(x\)</span> like this –</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">approx_exponential</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="c1"># The value at t = 0 is 1.0</span>
+    <span class="k">for</span> <span class="n">tstep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="c1"># add all the little bits of changes</span>
+        <span class="c1"># to x according to dx = kx dt</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">dt</span>
+    <span class="k">return</span> <span class="n">x</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The above code is for illustration only and we wouldn’t want to
+calculate the exponential function this way due to possible numerical errors
+and running time costs. There are better ways, but the above code
+illustrates the principle behind it.</p>
+</div>
+<p>If <span class="math notranslate nohighlight">\(y = e^x\)</span>, how do you get <span class="math notranslate nohighlight">\(x\)</span> given <span class="math notranslate nohighlight">\(y\)</span>? That function is
+called the “natural logarithm” and we write <span class="math notranslate nohighlight">\(x = \ln y = \log_e{x}\)</span>. The
+<span class="math notranslate nohighlight">\(\ln\)</span> is to be read as “natural logarithm” and is sometimes pronounced
+“lawn”. In code, when we write <code class="code docutils literal notranslate"><span class="pre">log</span></code>, we actual mean “natural logarithm”
+as well.</p>
 </section>
 <section id="basic-trigonometric-functions">
 <h2>Basic trigonometric functions<a class="headerlink" href="#basic-trigonometric-functions" title="Permalink to this heading">¶</a></h2>
@@ -304,7 +375,7 @@ repeat their values every time we come around full circle.</p>
 </div>
 <p>If we represent the point on the circle as the complex number <span class="math notranslate nohighlight">\(x + iy\)</span>,
 then since <span class="math notranslate nohighlight">\(x = r\cos \theta\)</span> and <span class="math notranslate nohighlight">\(y = r\sin \theta\)</span>, we have
-<span class="math notranslate nohighlight">\(x+iy = r\cos \theta + ir\sin \theta = r(\cos\theta + i\sin\theta)\)</span>.</p>
+<span class="math notranslate nohighlight">\(x+iy = r\cos \theta + ir\sin \theta = r(\cos\theta + i\sin\theta) = r e^{i\theta}\)</span>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>A complex numer <span class="math notranslate nohighlight">\(x+iy\)</span> can represent a point on the X-Y plane.
