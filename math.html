@@ -298,14 +298,15 @@ bit of time elapses, the position changes by a little bit that is proportional
 to the elapsed time by a constant factor <span class="math notranslate nohighlight">\(v\)</span>. If you let this <span class="math notranslate nohighlight">\(v\)</span>
 vary with time, then we have a system whose velocity is changing with time.
 In that case, we have <span class="math notranslate nohighlight">\(dx = v(t)dt\)</span>.</p>
-<p>So when you have a known function <span class="math notranslate nohighlight">\(v(t)\)</span>, you can calculate the
-position of the entity given a starting position at <span class="math notranslate nohighlight">\(t = 0\)</span> using
-the following program – which basically adds up all the little bits
-of changes to the position to arrive at the final position.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">approx_position</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">x0</span><span class="p">):</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span>
-    <span class="k">for</span> <span class="n">tstep</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">v</span><span class="p">(</span><span class="n">tstep</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
+<p>So when you have a known function <span class="math notranslate nohighlight">\(v(t)\)</span>, you can calculate the position
+of the entity given a starting position at <span class="math notranslate nohighlight">\(t = 0\)</span> using the following
+program – which basically adds up all the little bits of changes to the
+position between times <span class="math notranslate nohighlight">\(t_1\)</span> and <span class="math notranslate nohighlight">\(t_2\)</span> to arrive at the final
+position, given the starting position at <span class="math notranslate nohighlight">\(t_1\)</span> to be <span class="math notranslate nohighlight">\(x_1\)</span>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">approx_position</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">x1</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x1</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
     <span class="k">return</span> <span class="n">x</span>
 </pre></div>
 </div>
@@ -315,15 +316,15 @@ If <span class="math notranslate nohighlight">\(v\)</span> is itself changing at
 point in time, we need to know both its starting position <em>and</em> its
 starting velocity. We can use a similar approach to find out the approximate
 position in this case too, as shown below –</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">approx_position</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">v0</span><span class="p">):</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span>
-    <span class="n">v</span> <span class="o">=</span> <span class="n">v0</span>
-    <span class="k">for</span> <span class="n">tstep</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">approx_position</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">v1</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x1</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">v1</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
         <span class="c1"># The current velocity is v, so x changes a little bit.</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="n">dt</span>
         <span class="c1"># The current acceleration is a(t), and so the velocity also</span>
         <span class="c1"># changes a little bit a little later.</span>
-        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="n">tstep</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
     <span class="k">return</span> <span class="n">x</span>
 </pre></div>
 </div>
