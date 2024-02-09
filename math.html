@@ -441,7 +441,7 @@ but according to our complex number multiplication rule,</p>
 <p>So we see that -</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{array}{rcl}
-\\cos(\phi+\theta) + i\sin(\phi+\theta)
+\cos(\phi+\theta) + i\sin(\phi+\theta)
 &amp;=&amp; (\cos\phi\cos\theta - \sin\phi\sin\theta) + i(\cos\phi\sin\theta+\sin\phi\cos\theta) \\
 \cos(\phi+\theta) &amp;=&amp; \cos\phi\cos\theta - \sin\phi\sin\theta \\
 \sin(\phi+\theta) &amp;=&amp; \cos\phi\sin\theta + \sin\phi\cos\theta
@@ -461,7 +461,7 @@ approximation – i.e. ignoring “tiny fractions of little bit of
 <p>If we then expand that using what we saw before,</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{array}{rcl}
-\\cos(\theta+d\theta) &amp;=&amp; \cos\theta\cos(d\theta)-\sin\theta\sin(d\theta) \\
+\cos(\theta+d\theta) &amp;=&amp; \cos\theta\cos(d\theta)-\sin\theta\sin(d\theta) \\
 &amp;=&amp; \cos\theta + (-\sin\theta) d\theta \\
 \sin(\theta+d\theta) &amp;=&amp; \sin\theta\cos(d\theta) + \cos\theta\sin(d\theta) \\
 &amp;=&amp; \sin\theta + (\cos\theta)d\theta
@@ -469,8 +469,8 @@ approximation – i.e. ignoring “tiny fractions of little bit of
 <p>So, using our <span class="math notranslate nohighlight">\(f(x+dx) = f(x) + df\)</span>, we see the following –</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{array}{rcl}
-\frac{d}{d\theta}\cos\theta &amp;=&amp; -\sin\theta \\
-\frac{d}{d\theta}\sin\theta &amp;=&amp; \cos\theta
+d(\cos\theta) &amp;=&amp; (-\sin\theta) d\theta \\
+d(\sin\theta) &amp;=&amp; (\cos\theta) d\theta
 \end{array}\end{split}\]</div>
 <figure class="align-center" id="id8">
 <img alt="Rotating by a little bit of :math:`\theta` (i.e. by :math:`d\theta`)." src="_images/drtheta.png" />
@@ -478,6 +478,19 @@ approximation – i.e. ignoring “tiny fractions of little bit of
 <p><span class="caption-number">Fig. 8 </span><span class="caption-text">Rotating by a little bit of <span class="math notranslate nohighlight">\(\theta\)</span>.</span><a class="headerlink" href="#id8" title="Permalink to this image">¶</a></p>
 </figcaption>
 </figure>
+<p>If we then combine the two as a single complex number, we get –</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{rcl}
+d(\cos\theta + i\sin\theta) &amp;=&amp; (-\sin\theta)d\theta + i(\cos\theta)d\theta \\
+&amp;=&amp; i(\cos\theta + i\sin\theta)d\theta
+\end{array}\end{split}\]</div>
+<p>So we see that the function <span class="math notranslate nohighlight">\(\text{pos}(\theta) = \cos\theta +
+i\sin\theta\)</span> obeys the dynamics we discussed earlier:
+<span class="math notranslate nohighlight">\(d(\text{pos}(\theta)) = i\text{pos}(\theta)d\theta\)</span>.
+That reads like <span class="math notranslate nohighlight">\(dx/dt = kx\)</span>, which gives us <span class="math notranslate nohighlight">\(x = e^{kt}\)</span>
+as a solution. Hence we can see how <span class="math notranslate nohighlight">\(\text{pos}(\theta) = e^{i\theta}\)</span>
+meets that same dynamics (albeit in the complex plane) which lets us
+understand how <span class="math notranslate nohighlight">\(e^{i\theta} = \cos\theta + i\sin\theta\)</span>.</p>
 </section>
 </section>
 
