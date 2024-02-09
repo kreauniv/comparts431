@@ -246,7 +246,7 @@ way --
 
     \int{2xdx} = x^2
 
-To put it a bit more generally, 
+To put it a bit more explicitly in terms of the notion of "derivative", 
 
 .. math::
 
