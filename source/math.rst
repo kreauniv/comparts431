@@ -445,11 +445,11 @@ shifts up (additively) by a step.
    \begin{array}{rcl}
    e^{a+b} &=& e^a \times e^b \\
    e^{ab} &=& (e^a)^b \\
-   ln{ab} &=& ln(a) + ln(b)
+   \ln(ab) &=& \ln(a) + \ln(b)
    \end{array}
 
 If we instead consider the relation :math:`y = a^x`, we can rewrite
-that as :math:`y = e^{ln(a)x}` and therefore we have :math:`x = log_a(y) = ln(y)/ln(a)`. 
+that as :math:`y = e^{\ln(a)x}` and therefore we have :math:`x = \log_a(y) = \ln(y)/\ln(a)`. 
 
 Basic trigonometric functions
 -----------------------------
