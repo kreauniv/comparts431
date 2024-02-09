@@ -340,17 +340,18 @@ to the elapsed time by a constant factor :math:`v`. If you let this :math:`v`
 vary with time, then we have a system whose velocity is changing with time.
 In that case, we have :math:`dx = v(t)dt`.
 
-So when you have a known function :math:`v(t)`, you can calculate the
-position of the entity given a starting position at :math:`t = 0` using
-the following program -- which basically adds up all the little bits
-of changes to the position to arrive at the final position.
+So when you have a known function :math:`v(t)`, you can calculate the position
+of the entity given a starting position at :math:`t = 0` using the following
+program -- which basically adds up all the little bits of changes to the
+position between times :math:`t_1` and :math:`t_2` to arrive at the final
+position, given the starting position at :math:`t_1` to be :math:`x_1`.
 
 .. code-block:: python
     
-    def approx_position(v, t, dt, x0):
-        x = x0
-        for tstep in arange(0, t, dt):
-            x = x + v(tstep) * dt
+    def approx_position(v, t1, t2, dt, x1):
+        x = x1
+        for t in arange(t1, t2, dt):
+            x = x + v(t) * dt
         return x
 
 One may then also ask "how do we describe :math:`v` changing with time?".
@@ -362,15 +363,15 @@ position in this case too, as shown below --
 
 .. code-block:: python
     
-    def approx_position(a, t, dt, x0, v0):
-        x = x0
-        v = v0
-        for tstep in arange(0, t, dt):
+    def approx_position(a, t1, t2, dt, x1, v1):
+        x = x1
+        v = v1
+        for t in arange(t1, t2, dt):
             # The current velocity is v, so x changes a little bit.
             x = x + v * dt
             # The current acceleration is a(t), and so the velocity also
             # changes a little bit a little later.
-            v = v + a(tstep) * dt
+            v = v + a(t) * dt
         return x
 
 One interesting case is a system that behaves according to :math:`dx/dt = kx`
