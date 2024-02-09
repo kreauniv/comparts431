@@ -193,7 +193,7 @@ determine by how much :math:`f` changes when we change :math:`x` by "a little bi
 For our given function, 
 
 .. math::
-    \begin{array}
+    \begin{array}{rcl}
     f(x+dx) &=& (x+dx)^2 - 3(x+dx) \\
     &=& x^2 + (2x)dx + dx^2 - 3x - 3dx \\
     &=& x^2 - 3x + (2x-3)dx
