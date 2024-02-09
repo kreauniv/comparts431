@@ -326,6 +326,18 @@ position in this case too, as shown below –</p>
         <span class="c1"># changes a little bit a little later.</span>
         <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
     <span class="k">return</span> <span class="n">x</span>
+
+<span class="c1"># A slightly refined version of the above</span>
+<span class="k">def</span> <span class="nf">refined_approx_position</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">v1</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x1</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">v1</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="n">v_now</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="n">v_little_later</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
+        <span class="n">v_mean</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">v_now</span> <span class="o">+</span> <span class="n">v_little_later</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">v_mean</span> <span class="o">*</span> <span class="n">dt</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">v_little_later</span>
+    <span class="k">return</span> <span class="n">x</span>
 </pre></div>
 </div>
 <p>One interesting case is a system that behaves according to <span class="math notranslate nohighlight">\(dx/dt = kx\)</span>
