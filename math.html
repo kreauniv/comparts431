@@ -356,6 +356,34 @@ called the “natural logarithm” and we write <span class="math notranslate no
 <span class="math notranslate nohighlight">\(\ln\)</span> is to be read as “natural logarithm” and is sometimes pronounced
 “lawn”. In code, when we write <code class="code docutils literal notranslate"><span class="pre">log</span></code>, we actual mean “natural logarithm”
 as well.</p>
+<figure class="align-center" id="id5">
+<img alt="The exponential function at different scales" src="_images/exp.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 5 </span><span class="caption-text">The exponential function <span class="math notranslate nohighlight">\(y = e^x\)</span> at different scales.
+Notice that it rises in value very quickly as you move along <span class="math notranslate nohighlight">\(x\)</span>.</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>As you see in the figure above, the exponential function grows very fast –
+geometrically fast. That is, for every step change in <span class="math notranslate nohighlight">\(x\)</span>, the function’s
+value gets <em>multiplied</em> by a factor.</p>
+<figure class="align-center" id="id6">
+<img alt="The natural logarithm function at different scales" src="_images/ln.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 6 </span><span class="caption-text">The natural logarithm function at different scales.</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The above picture shows the natural logarithm at different scales. It,
+being the inverse of the exponential, grows very very slowly with <span class="math notranslate nohighlight">\(x\)</span>.
+Every time you scale <span class="math notranslate nohighlight">\(x\)</span> by a factor, the <span class="math notranslate nohighlight">\(y\)</span> value merely
+shifts up (additively) by a step.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{rcl}
+e^{a+b} &amp;=&amp; e^a \times e^b \\
+e^{ab} &amp;=&amp; (e^a)^b \\
+ln{ab} &amp;=&amp; ln(a) + ln(b)
+\end{array}\end{split}\]</div>
+<p>If we instead consider the relation <span class="math notranslate nohighlight">\(y = a^x\)</span>, we can rewrite
+that as <span class="math notranslate nohighlight">\(y = e^{ln(a)x}\)</span> and therefore we have <span class="math notranslate nohighlight">\(x = log_a(y) = ln(y)/ln(a)\)</span>.</p>
 </section>
 <section id="basic-trigonometric-functions">
 <h2>Basic trigonometric functions<a class="headerlink" href="#basic-trigonometric-functions" title="Permalink to this heading">¶</a></h2>
@@ -363,11 +391,11 @@ as well.</p>
 play a basic role in construction of sound from more elementary sounds.</p>
 <p>The two most basic functions are, as you know, <span class="math notranslate nohighlight">\(\cos \theta\)</span> and
 <span class="math notranslate nohighlight">\(\sin \theta\)</span>, where <span class="math notranslate nohighlight">\(\theta\)</span> is an angle in “radians”.</p>
-<figure class="align-center" id="id5">
+<figure class="align-center" id="id7">
 <img alt="Basic trigonometric functions" src="_images/trig1.png" />
 <figcaption>
-<p><span class="caption-number">Fig. 5 </span><span class="caption-text">The basic trignonometric functions <span class="math notranslate nohighlight">\(\sin \theta\)</span> and <span class="math notranslate nohighlight">\(\cos
-\theta\)</span>.</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+<p><span class="caption-number">Fig. 7 </span><span class="caption-text">The basic trignonometric functions <span class="math notranslate nohighlight">\(\sin \theta\)</span> and <span class="math notranslate nohighlight">\(\cos
+\theta\)</span>.</span><a class="headerlink" href="#id7" title="Permalink to this image">¶</a></p>
 </figcaption>
 </figure>
 <p>In the picture above, we’ve related the two functions to a point along a circle
@@ -442,10 +470,10 @@ approximation – i.e. ignoring “tiny fractions of little bit of
 \frac{d}{d\theta}\cos\theta &amp;=&amp; -\sin\theta \\
 \frac{d}{d\theta}\sin\theta &amp;=&amp; \cos\theta
 \end{array}\end{split}\]</div>
-<figure class="align-center" id="id6">
+<figure class="align-center" id="id8">
 <img alt="Rotating by a little bit of :math:`\theta` (i.e. by :math:`d\theta`)." src="_images/drtheta.png" />
 <figcaption>
-<p><span class="caption-number">Fig. 6 </span><span class="caption-text">Rotating by a little bit of <span class="math notranslate nohighlight">\(\theta\)</span>.</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
+<p><span class="caption-number">Fig. 8 </span><span class="caption-text">Rotating by a little bit of <span class="math notranslate nohighlight">\(\theta\)</span>.</span><a class="headerlink" href="#id8" title="Permalink to this image">¶</a></p>
 </figcaption>
 </figure>
 </section>
