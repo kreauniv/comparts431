@@ -49,7 +49,7 @@ If I tell you that a function takes a value :math:`y_1` at :math:`x_1` and
 :math:`y_2` at :math:`x_2`, and in between :math:`x_1` and :math:`x_2` it looks
 like a straight line, we call it a "linear interpolation" -- i.e. we're
 expressing the value of the function in between ("inter") :math:`x_1` and
-:math:`x_2` as a straight line that connect two points in the X-Y plane
+:math:`x_2` as a straight line that connects two points in the X-Y plane
 ("linear").
 
 .. math::
