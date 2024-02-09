@@ -404,6 +404,39 @@ called the "natural logarithm" and we write :math:`x = \ln y = \log_e{x}`. The
 "lawn". In code, when we write :code:`log`, we actual mean "natural logarithm"
 as well.
 
+.. figure:: images/exp.png
+   :align: center
+   :alt: The exponential function at different scales
+
+   The exponential function :math:`y = e^x` at different scales.
+   Notice that it rises in value very quickly as you move along :math:`x`.
+
+As you see in the figure above, the exponential function grows very fast --
+geometrically fast. That is, for every step change in :math:`x`, the function's
+value gets *multiplied* by a factor.
+
+.. figure:: images/ln.png
+   :align: center
+   :alt: The natural logarithm function at different scales
+
+   The natural logarithm function at different scales.
+
+The above picture shows the natural logarithm at different scales. It,
+being the inverse of the exponential, grows very very slowly with :math:`x`.
+Every time you scale :math:`x` by a factor, the :math:`y` value merely
+shifts up (additively) by a step.
+
+.. math::
+
+   \begin{array}{rcl}
+   e^{a+b} &=& e^a \times e^b \\
+   e^{ab} &=& (e^a)^b \\
+   ln{ab} &=& ln(a) + ln(b)
+   \end{array}
+
+If we instead consider the relation :math:`y = a^x`, we can rewrite
+that as :math:`y = e^{ln(a)x}` and therefore we have :math:`x = log_a(y) = ln(y)/ln(a)`. 
+
 Basic trigonometric functions
 -----------------------------
 
