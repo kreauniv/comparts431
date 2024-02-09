@@ -26,7 +26,7 @@ input :math:`x`, we write :math:`y = f(x)`. Some examples are shown below.
    another number. These are best shown as an X-Y plot.
 
 In a programming language like python, you can express these functions
-is more or less the same form, apart from syntax.
+in more or less the same form, apart from syntax.
 
 .. code-block:: python
 
