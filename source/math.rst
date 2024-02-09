@@ -266,12 +266,7 @@ be written as a summation loop in python.
 .. code-block:: python
 
     def approx_integral(f, x1, x2, dx):
-        result = 0.0
-        for x in arange(x1,x2,dx):
-            # Add up the little bits of changes 
-            # described by the rate f(x).
-            result = result + f(x) * dx
-        return result
+        return sum(f(x) * dx for x in arange(x1, x2, dx))
 
 Derivatives of transformed functions
 ------------------------------------
