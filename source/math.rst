@@ -208,7 +208,14 @@ This calculation is easily translated into a python program as follows --
 .. code-block:: python
 
     def approx_derivative(f, x, dx):
-        return (f(x + dx) - f(x)) / dx
+        df = f(x + dx) - f(x)
+        return df/dx
+
+    def better_approx_derivative(f, x, dx):
+        df = f(x + 0.5 * dx) - f(x - 0.5 * dx)
+        # This centers the estimate of the derivative
+        # about the input x.
+        return df/dx
 
 Going the other way, if we add lots of "little bits of :math:`x`" together,
 we expect to get .... :math:`x`!! This computation of "adding lots of little
