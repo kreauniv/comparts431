@@ -395,7 +395,7 @@ stepping through in "little bits of :math:`x`", you'll find that for positive
 values of :math:`k`, the position very quickly increases enormously and for
 negative values of :math:`k`, it always reduces quickly to :math:`0`.
 
-The solution of that dynamical equation is the "exponential function" --
+The solution of that dynamical equation is the "exponential function":
 :math:`x = e^{kt}`. To an approximation, you can calculate this function
 by adding up little bits of :math:`x` like this --
 
