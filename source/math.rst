@@ -269,15 +269,18 @@ be written as a summation loop in python.
 Derivatives of transformed functions
 ------------------------------------
 
-A few things useful to know here w.r.t. transformed functions --
+A few things listed below are useful to know here w.r.t. transformed functions.
+Here, we use the notation :math:`f'(\text{something})` to denote the ratio of
+the "little bit of change in :math:`f` to the little bit change
+in :math:`\text{something}` that gave us that change in :math:`f`.
 
 .. math::
 
     \begin{array}{rcl}
-    \frac{d}{dx}f(x-a) &=& \frac{df}{dx}(x-a) \\
-    \frac{d}{dx}(kf(x)) &=& k\frac{df}{dx}(x) \\
-    \frac{d}{dx}f(kx) &=& k \frac{df}{dx}(kx) \\
-    \frac{d}{dx}f(x/k) &=& \frac{1}{k} \frac{df}{dx}(x/k)
+    \frac{d}{dx}f(x-a) &=& f'(x-a) \\
+    \frac{d}{dx}(kf(x)) &=& k f'(x) \\
+    \frac{d}{dx}f(kx) &=& k f'(kx) \\
+    \frac{d}{dx}f(x/k) &=& \frac{1}{k} f'(x/k)
     \end{array}
 
 In words,
@@ -302,9 +305,6 @@ of two functions.
     \begin{array}{rcl}
     df(g(x)) &=& f'(g(x)) g'(x) dx
     \end{array}
-
-.. note:: The notation :math:`f'(x)` is sometimes useful to denote the
-   derivative of :math:`f` w.r.t. its argument.
 
 All that is saying is that when you change :math:`x` by a little bit, then
 :math:`g` changes by :math:`g'(x)dx`. So now that change becomes the change in
