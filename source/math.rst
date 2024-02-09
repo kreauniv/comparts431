@@ -207,7 +207,7 @@ This calculation is easily translated into a python program as follows --
 
 .. code-block:: python
 
-    def approx_derivative(f, dx):
+    def approx_derivative(f, x, dx):
         return (f(x + dx) - f(x)) / dx
 
 Going the other way, if we add lots of "little bits of :math:`x`" together,
