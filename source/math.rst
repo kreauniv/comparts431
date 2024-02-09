@@ -374,6 +374,18 @@ position in this case too, as shown below --
             v = v + a(t) * dt
         return x
 
+    # A slightly refined version of the above
+    def refined_approx_position(a, t1, t2, dt, x1, v1):
+        x = x1
+        v = v1
+        for t in arange(t1, t2, dt):
+            v_now = v
+            v_little_later = v + a(t) * dt
+            v_mean = 0.5 * (v_now + v_little_later)
+            x = x + v_mean * dt
+            v = v_little_later
+        return x
+
 One interesting case is a system that behaves according to :math:`dx/dt = kx`
 for some constant :math:`k`. In this system, the speed with which :math:`x`
 changes, is proportional to where it is. If you try and plot such a system by
