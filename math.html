@@ -241,13 +241,16 @@ be written as a summation loop in python.</p>
 </section>
 <section id="derivatives-of-transformed-functions">
 <h2>Derivatives of transformed functions<a class="headerlink" href="#derivatives-of-transformed-functions" title="Permalink to this heading">¶</a></h2>
-<p>A few things useful to know here w.r.t. transformed functions –</p>
+<p>A few things listed below are useful to know here w.r.t. transformed functions.
+Here, we use the notation <span class="math notranslate nohighlight">\(f'(\text{something})\)</span> to denote the ratio of
+the “little bit of change in <span class="math notranslate nohighlight">\(f\)</span> to the little bit change
+in <span class="math notranslate nohighlight">\(\text{something}\)</span> that gave us that change in <span class="math notranslate nohighlight">\(f\)</span>.</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{array}{rcl}
-\frac{d}{dx}f(x-a) &amp;=&amp; \frac{df}{dx}(x-a) \\
-\frac{d}{dx}(kf(x)) &amp;=&amp; k\frac{df}{dx}(x) \\
-\frac{d}{dx}f(kx) &amp;=&amp; k \frac{df}{dx}(kx) \\
-\frac{d}{dx}f(x/k) &amp;=&amp; \frac{1}{k} \frac{df}{dx}(x/k)
+\frac{d}{dx}f(x-a) &amp;=&amp; f'(x-a) \\
+\frac{d}{dx}(kf(x)) &amp;=&amp; k f'(x) \\
+\frac{d}{dx}f(kx) &amp;=&amp; k f'(kx) \\
+\frac{d}{dx}f(x/k) &amp;=&amp; \frac{1}{k} f'(x/k)
 \end{array}\end{split}\]</div>
 <p>In words,</p>
 <ol class="arabic simple">
@@ -266,11 +269,6 @@ of two functions.</p>
 \[\begin{array}{rcl}
 df(g(x)) &amp;=&amp; f'(g(x)) g'(x) dx
 \end{array}\]</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The notation <span class="math notranslate nohighlight">\(f'(x)\)</span> is sometimes useful to denote the
-derivative of <span class="math notranslate nohighlight">\(f\)</span> w.r.t. its argument.</p>
-</div>
 <p>All that is saying is that when you change <span class="math notranslate nohighlight">\(x\)</span> by a little bit, then
 <span class="math notranslate nohighlight">\(g\)</span> changes by <span class="math notranslate nohighlight">\(g'(x)dx\)</span>. So now that change becomes the change in
 the input to <span class="math notranslate nohighlight">\(f\)</span>, which will then change by <span class="math notranslate nohighlight">\(f'(g(x))g'(x)dx\)</span>.</p>
