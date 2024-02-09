@@ -500,7 +500,7 @@ So we see that -
 .. math::
 
    \begin{array}{rcl}
-   \\cos(\phi+\theta) + i\sin(\phi+\theta)
+   \cos(\phi+\theta) + i\sin(\phi+\theta)
    &=& (\cos\phi\cos\theta - \sin\phi\sin\theta) + i(\cos\phi\sin\theta+\sin\phi\cos\theta) \\
    \cos(\phi+\theta) &=& \cos\phi\cos\theta - \sin\phi\sin\theta \\
    \sin(\phi+\theta) &=& \cos\phi\sin\theta + \sin\phi\cos\theta
@@ -525,7 +525,7 @@ If we then expand that using what we saw before,
 .. math::
 
    \begin{array}{rcl}
-   \\cos(\theta+d\theta) &=& \cos\theta\cos(d\theta)-\sin\theta\sin(d\theta) \\
+   \cos(\theta+d\theta) &=& \cos\theta\cos(d\theta)-\sin\theta\sin(d\theta) \\
    &=& \cos\theta + (-\sin\theta) d\theta \\
    \sin(\theta+d\theta) &=& \sin\theta\cos(d\theta) + \cos\theta\sin(d\theta) \\
    &=& \sin\theta + (\cos\theta)d\theta
@@ -536,8 +536,8 @@ So, using our :math:`f(x+dx) = f(x) + df`, we see the following --
 .. math::
 
     \begin{array}{rcl}
-    \frac{d}{d\theta}\cos\theta &=& -\sin\theta \\
-    \frac{d}{d\theta}\sin\theta &=& \cos\theta
+    d(\cos\theta) &=& (-\sin\theta) d\theta \\
+    d(\sin\theta) &=& (\cos\theta) d\theta
     \end{array}
 
 .. figure:: images/drtheta.png
@@ -546,6 +546,22 @@ So, using our :math:`f(x+dx) = f(x) + df`, we see the following --
 
    Rotating by a little bit of :math:`\theta`.
 
+If we then combine the two as a single complex number, we get --
+
+.. math::
+
+   \begin{array}{rcl}
+   d(\cos\theta + i\sin\theta) &=& (-\sin\theta)d\theta + i(\cos\theta)d\theta \\
+   &=& i(\cos\theta + i\sin\theta)d\theta
+   \end{array}
+
+So we see that the function :math:`\text{pos}(\theta) = \cos\theta +
+i\sin\theta` obeys the dynamics we discussed earlier:
+:math:`d(\text{pos}(\theta)) = i\text{pos}(\theta)d\theta`.
+That reads like :math:`dx/dt = kx`, which gives us :math:`x = e^{kt}`
+as a solution. Hence we can see how :math:`\text{pos}(\theta) = e^{i\theta}`
+meets that same dynamics (albeit in the complex plane) which lets us
+understand how :math:`e^{i\theta} = \cos\theta + i\sin\theta`.
 
 
 
