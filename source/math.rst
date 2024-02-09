@@ -323,6 +323,7 @@ yield approximately the same answers (subject to numerical errors).
 
     def chain_rule(f, g, x, dx):
         gprime = approx_derivative(g, x, dx)
+        dg = gprime * dx
         fprime = approx_derivative(f, g(x), dg)
         return fprime * gprime 
 
