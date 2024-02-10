@@ -166,6 +166,23 @@ def linterp(v1, duration_secs, v2):
         return v
     return next
 
+def expinterp(v1, duration_secs, v2):
+    """
+    Similar to linterp, but uses exponential interpolation.
+    For this to work, both v1 and v2 must be values > 0.
+    """
+    v = math.log(v1)
+    dv_per_sec = (math.log(v2) - v) / duration_secs
+    def next(t, dt):
+        nonlocal v, dv_per_sec
+        if t <= 0.0:
+            return v1
+        if t >= duration_secs:
+            return v2
+        v += dv_per_sec * dt
+        return math.exp(v)
+    return next
+
 def delay(model, time_shift):
     """
     Plays the model a little later, delayed by
@@ -206,7 +223,7 @@ def expdecay(rate, attack_secs=0.025):
         return factor
     return next
 
-def seq(speed, segments):
+def seq(tempo, segments):
     """
     Plays the given sequence.
     segments is an array of pairs (time_to_next_secs, model) 
@@ -214,21 +231,22 @@ def seq(speed, segments):
     Think of this as playing a series of "notes". The
     models may overlap in time, depending on what you give.
     """
-    speed = asmodel(speed)
+    tempo = asmodel(tempo)
     times = [0.0]
     voices = []
     nextvoices = []
     for s in segments:
         times.append(times[-1] + s[0])
     i = 0
+    t = 0.0
 
-    def next(t, dt):
-        nonlocal times, voices, nextvoices, i
+    def next(realt, dt):
+        nonlocal times, voices, nextvoices, i, t
         if t < 0.0:
             return 0.0
         if i < len(segments) and t >= times[i]:
             if segments[i][1] != None:
-                voices.append((times[i], segments[i]))
+                voices.append((realt, segments[i]))
             i = i + 1
         if len(voices) == 0:
             if t >= times[-1]:
@@ -236,12 +254,17 @@ def seq(speed, segments):
             return 0.0
         s = 0.0
         for v in voices:
-            vs = v[1][1](t - v[0], dt)
+            vs = v[1][1](realt - v[0], dt)
             if vs != None:
                 s += vs
                 nextvoices.append(v)
         voices.clear()
         nextvoices, voices = voices, nextvoices
+        sp = tempo(realt, dt)
+        if sp != None:
+            t += (sp/60.0) * dt
+        else
+            t += dt
         return s
     return next
 
