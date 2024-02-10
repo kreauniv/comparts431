@@ -407,6 +407,19 @@ def linearmap(a1, a2, b1, b2, model):
         return b1 + (v - a1) * scale
     return next
 
+def noise(amp=0.25):
+    """
+    Makes white noise with the given amplitude.
+    """
+    amp = asmodel(amp)
+    rng = np.random.default_rng()
+    def next(t, dt):
+        a = amp(t, dt)
+        if a == None:
+            return None
+        return a * 2.0 * (rng.random() - 0.5)
+    return next
+
 def maketable(L, f):
     """
     Constructs a table as a NumPy array using the given function f
