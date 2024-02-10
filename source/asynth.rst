@@ -16,11 +16,9 @@ range. Different approaches succeed to varying extents in this endeavour, but
 programming languages play a key role in *designing* an interesting space of
 possibilities to explore.
 
-.. admonition:: 
-
-   Creativity is as much in the exploration of unknown waters as
-   it is in the construction of *constraints* within which such exploration is
-   taken up.
+.. note:: Creativity is as much in the exploration of unknown waters as it is
+   in the construction of *constraints* within which such exploration is taken
+   up.
 
 Here, we start with a few well known and simple principles which we can build upon
 as we go.
