@@ -28,13 +28,21 @@ electronic instrument constructed by `Leon Theremin`_.
 
 .. _Leon Theremin: https://en.wikipedia.org/wiki/Leon_Theremin
 
-{{< youtube LYSGTkNtazo >}}
+.. raw:: html
+
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+        <iframe src="https://www.youtube.com/embed/w5qf9O6c20o" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    </div>
 
 It features two dimensions of control - the "volume" and the "pitch" of a
 single tone. With just these two dimensions of control [#dim]_, Clara Rockmore's
 virtuosic performances of classical pieces is practically legend.
 
-{{< youtube w-TKLD_ocnY >}}
+.. raw:: html
+
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+        <iframe src="https://www.youtube.com/embed/pSzTPGlNa5U" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    </div>
 
 Let's therefore try and understand these two dimensions first by making
 a toy model that can produce them.
