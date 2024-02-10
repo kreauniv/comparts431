@@ -95,6 +95,13 @@ represent the same angular position on the circle. We can make this fact explici
 by using the <code class="docutils literal notranslate"><span class="pre">fmod</span></code> operation in python, which computes just the fractional part
 of a number. This fractional part can only lie between <span class="math notranslate nohighlight">\(0.0\)</span> and <span class="math notranslate nohighlight">\(1.0\)</span>.
 We call this a “phasor”.</p>
+<div class="admonition-term admonition">
+<p class="admonition-title"><strong>Term</strong></p>
+<p>A “phasor” is a function of time that rises from 0 to 1 linearly and fallse
+back to 0 and does it over and over again with a chosen period. A phasor
+with a constant frequency can be represented by the equation <span class="math notranslate nohighlight">\(y =
+\text{fmod}(ft,1.0)\)</span>. We’ll denote this by <span class="math notranslate nohighlight">\(\phi(ft)\)</span>.</p>
+</div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">constant_frequency_phasor</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">phi0</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">fmod</span><span class="p">(</span><span class="n">f</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="n">phi0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 </pre></div>

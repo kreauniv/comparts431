@@ -16,7 +16,9 @@ range. Different approaches succeed to varying extents in this endeavour, but
 programming languages play a key role in *designing* an interesting space of
 possibilities to explore.
 
-.. admonition:: Creativity is as much in the exploration of unknown waters as
+.. admonition:: 
+
+   Creativity is as much in the exploration of unknown waters as
    it is in the construction of *constraints* within which such exploration is
    taken up.
 
@@ -84,10 +86,12 @@ by using the ``fmod`` operation in python, which computes just the fractional pa
 of a number. This fractional part can only lie between :math:`0.0` and :math:`1.0`.
 We call this a "phasor".
 
-.. admonition:: **Term**: A "phasor" is a function of time that rises from 0 to
-   1 linearly and fallse back to 0 and does it over and over again with a
-   chosen period. A phasor with a constant frequency can be represented by the
-   equation :math:`y = \text{fmod}(ft,1.0)`. We'll denote this by :math:`\phi(ft)`.
+.. admonition:: **Term**
+
+   A "phasor" is a function of time that rises from 0 to 1 linearly and fallse
+   back to 0 and does it over and over again with a chosen period. A phasor
+   with a constant frequency can be represented by the equation :math:`y =
+   \text{fmod}(ft,1.0)`. We'll denote this by :math:`\phi(ft)`.
 
 .. code-block:: python
 
