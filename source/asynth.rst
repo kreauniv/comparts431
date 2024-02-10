@@ -8,12 +8,13 @@ principle, exhaust all the possible stereo auditory experiences that a person
 can have in 5 minutes. [#ex28]_ That's under 110MB! The catch, you ask? It is
 that what we're seeking are some small beautiful islands of musical meaning in
 a vast ocean of possibilities. An understanding of sound and music perception
-and cognition serve as compasses when navigating the ocean of possibilities. A
-goal of music music production and composition software is, ironically, to
-*reduce* this space of possibilities to a much smaller, but hopefully more
-*interesting* range. Different approaches succeed to varying extents in this
-endeavour, but programming languages play a key role in *designing* an
-interesting space of possibilities to explore.
+and cognition serve as compasses when navigating the ocean of possibilities. 
+
+A goal of music production and composition software is, ironically, to *reduce*
+this space of possibilities to a much smaller, but hopefully more *interesting*
+range. Different approaches succeed to varying extents in this endeavour, but
+programming languages play a key role in *designing* an interesting space of
+possibilities to explore.
 
 .. admonition:: Creativity is as much in the exploration of unknown waters as
    it is in the construction of *constraints* within which such exploration is
