@@ -7,7 +7,7 @@ import sounddevice as sd
 
 sampling_rate_Hz = 48000
 
-def play(model, duration_secs, sampling_rate_Hz=sampling_rate_Hz, maxamp=0.25):
+def play(model, duration_secs, sampling_rate_Hz=sampling_rate_Hz, maxamp=0.5):
     """
     Given a model, it will render it for the given duration
     and play it immediately.
@@ -36,11 +36,13 @@ def render(model, duration_secs, sampling_rate_Hz=sampling_rate_Hz):
     """
     dt = 1.0 / sampling_rate_Hz
     samples = []
+    print("rendering...", end="", flush=True)
     for t in arange(0.0, duration_secs, dt):
         v = model(t, dt)
         if v == None:
             break
         samples.append(v)
+    print("done")
     return np.array(samples, dtype='f')
 
 def rescale(maxamp, samples):
@@ -53,7 +55,7 @@ def rescale(maxamp, samples):
     amp = np.max(np.abs(sadj))
     return sadj * (maxamp / amp)
     
-def write_rawfile(samples, filename, maxamp=0.25):
+def write_rawfile(samples, filename, maxamp=0.5):
     """
     Writes the given NumPy float32 array to the given
     file as in raw float32 format, so Audacity can
@@ -103,6 +105,8 @@ def asmodel(v):
     """
     if type(v) == float:
         return konst(v)
+    if type(v) == int:
+        return konst(float(v))
     return v
 
 def konst(k):
