@@ -261,10 +261,7 @@ def seq(tempo, segments):
         voices.clear()
         nextvoices, voices = voices, nextvoices
         sp = tempo(realt, dt)
-        if sp != None:
-            t += (sp/60.0) * dt
-        else
-            t += dt
+        t += (sp/60.0) * dt if sp != None else dt
         return s
     return next
 
