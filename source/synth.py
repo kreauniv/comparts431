@@ -73,7 +73,7 @@ def read_rawfile(filename):
     """
     return np.fromfile(filename, dtype=np.float32)
 
-def dB(val):
+def dBscale(val):
     """
     It is useful to specify amplitude scaling factors in
     "Decibels". Decibels is a logarithmic scale. dB(x) and
@@ -117,6 +117,31 @@ def konst(k):
         return k
     return next
 
+def aliasable(m):
+    """
+    By default, signals are single use only. You may only use them
+    as a dependency in one place.
+    If you want to use a particular signal as input for some calculation
+    in multiple places, don't use them directly, but create an aliasable
+    version first and use that everywhere you need it. (Don't also create
+    multiple aliasable versions.)
+
+    This works under the assumption that time always moves forward. The
+    aliasable signal uses that fact to store away the last calculated
+    result and to ensure that the underlying signal isn't updated if the
+    time doesn't step forward.
+    """
+    last_t = -1.0
+    last_val = -1.0
+    def next(t, dt):
+        nonlocal last_t, last_val
+        if t <= last_t:
+            return last_val
+        last_t = t
+        last_val = m(t, dt)
+        return last_val
+    return next
+
 def phasor(f, phi0=0.0):
     """
     f is a frequency. The phasor is a signal that goes
@@ -131,7 +156,10 @@ def phasor(f, phi0=0.0):
     f = asmodel(f)
     def next(t, dt):
         nonlocal phi
-        phi += f(t, dt) * dt
+        v = f(t, dt)
+        if v == None:
+            return None
+        phi += v * dt
         phi = math.fmod(phi, 1.0)
         return phi
     return next
@@ -228,6 +256,42 @@ def expdecay(rate, attack_secs=0.025):
     return next
 
 def seq(tempo, segments):
+    """
+    Plays the given sequence.
+    segments is an array of pairs (time_to_next_secs, model) 
+    A particular model can be None to indicate a gap.
+    Think of this as playing a series of "notes". The
+    models may overlap in time, depending on what you give.
+    """
+    N = len(segments)
+    tempo = asmodel(tempo)
+    times = [0.0]
+    realtimes = []
+    active_voice_ix = 0
+    i = 0
+    t = 0.0
+    def next(realt, dt):
+        if active_voice_ix >= N:
+            return None
+        if realt <= 0.0:
+            return 0.0
+        s = 0.0
+        for k in range(active_voice_ix,i+1):
+            v = segments[k][1](realt - realtimes[k], dt)
+            if v == None:
+                if k == active_voice_ix:
+                    active_voice_ix += 1
+            else:
+                s += v
+        sp = tempo(realt, dt)
+        t += (1.0 if isnothing(sp) else (sp/60.0)) * dt
+        if i+1 < len(times) && t >= times[i+1]:
+            i += 1
+            realtimes[i] = realt + dt
+        return s
+    return next
+ 
+def seq_slower_version(tempo, segments):
     """
     Plays the given sequence.
     segments is an array of pairs (time_to_next_secs, model) 
@@ -446,8 +510,8 @@ def noise(amp=0.25):
 
 def maketable(L, f):
     """
-    Constructs a table as a NumPy array using the given function f
-    applied to various positions in the table given as an argument
+    Constructs a table (for wavetable) as a NumPy array using the given
+    function f applied to various positions in the table given as an argument
     in the range [0,1].
 
     L is the number of samples in the table.
