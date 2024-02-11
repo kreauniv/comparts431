@@ -285,7 +285,7 @@ def seq(tempo, segments):
                 s += v
         sp = tempo(realt, dt)
         t += (1.0 if isnothing(sp) else (sp/60.0)) * dt
-        if i+1 < len(times) && t >= times[i+1]:
+        if i+1 < len(times) and t >= times[i+1]:
             i += 1
             realtimes[i] = realt + dt
         return s
