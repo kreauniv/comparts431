@@ -337,7 +337,7 @@ def mix(models):
     """
     Mixes down the array of models by adding all their outputs.
     """
-    voices = [*models]
+    voices = [asmodel(m) for m in models]
     nextvoices = []
     def next(t, dt):
         nonlocal voices, nextvoices
