@@ -190,7 +190,7 @@ def delay(model, time_shift):
     it keeps producing 0.0 values.
     """
     def next(t, dt):
-        if t >= time_shift
+        if t >= time_shift:
             return model(t - time_shift, dt)
         return 0.0
     return next
