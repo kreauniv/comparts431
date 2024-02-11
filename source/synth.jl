@@ -421,5 +421,5 @@ end
 noise(amp::Number; seed=1234, rng=MersenneTwister(seed)) = noise(konst(amp); seed, rng)
 
 function maketable(L::Int, f) :: Vector{Float32}
-    [f(t/L) for t in 0:(L-1)]
+    [Float32(f(t/L)) for t in 0:(L-1)]
 end
