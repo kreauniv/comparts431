@@ -447,6 +447,7 @@ def wavetable(table, amp, phasor):
     phasor in the range [0,1].
     """
     i = 0.0
+    amp = asmodel(amp)
     L = len(table)
     def next(t, dt):
         a = amp(t, dt)
