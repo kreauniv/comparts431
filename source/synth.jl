@@ -92,10 +92,12 @@ function render(model::Signal, duration_secs :: AbstractFloat; sr=48000)
     return samples
 end
 
-function write(model::Signal, duration_secs :: AbstractFloat, filename :: AbstractString; sr=48000, maxamp=0.5)
+function write(filename :: AbstractString, model::Signal, duration_secs :: AbstractFloat; sr=48000, maxamp=0.5)
     s = render(model, duration_secs; sr)
     s = rescale(maxamp, s)
-    write(filename, s)
+    open(filename, "w") do f
+        write(f, s)
+    end
 end
 
 function read_rawaudio(filename :: AbstractString)
@@ -110,7 +112,7 @@ function rescale(maxamp, samples)
     if amp < 1e-5
         return zeros(Float32, length(samples))
     else
-        return sadj .* (maxamp / amp)
+        return Float32.(sadj .* (maxamp / amp))
     end
 end
 
