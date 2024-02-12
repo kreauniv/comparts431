@@ -351,7 +351,7 @@ function value(s :: Seq, t, dt)
     return v
 end
 
-function render(s :: S, dur) where {S <: Signal}
+function render(s :: S, dur; maxamp=0.5) where {S <: Signal}
     dt = 1.0 / 48000.0
     tspan = 0.0:dt:dur
     result = Vector{Float32}()
@@ -362,12 +362,11 @@ function render(s :: S, dur) where {S <: Signal}
             break
         end
     end
-    return result
+    return rescale(maxamp, result)
 end
 
 function write(filename :: AbstractString, model::Sig, duration_secs :: AbstractFloat; sr=48000, maxamp=0.5) where {Sig <: Signal}
     s = render(model, duration_secs; sr)
-    s = rescale(maxamp, s)
     open(filename, "w") do f
         write(f, s)
     end
