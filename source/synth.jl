@@ -23,6 +23,32 @@ next value.
 
 Addition, subtraction and multiplication operations are
 available to combine signals and numbers.
+
+## Signal constructors
+
+- `aliasable(signal)`
+- `konst(number)`
+- `phasor(frequency, initial_phase)`
+- `sinosc(amplitude, phasor)`
+- `+`, `-`, `*`
+- `linterp(v1, duration_secs, v2)`
+- `expinterp(v1, duration_secs, v2)`
+- `expdecay(rate)`
+- `adsr(alevel, asecs, dsecs, suslevel, sussecs, relses)`
+- `sample(samples; looping, loopto)`
+- `wavetable(table, amp, phasor)`
+- `map(f, signal)`
+- `linearmap(a1, a2, b1, b2, signal)`
+- `clock(speed, t_end; sampling_rate_Hz)`
+- `clock_bpm(tempo_bpm, t_end; sampling_rate_Hz)`
+- `seq(clock, dur_signal_pair_vector)`
+
+## Utilities
+
+- `render(signal, dur_secs; sr, maxamp)`
+- `write(filename, signal, duration_secs; sr, axamp)`
+- `read_rawaudio(filename)`
+- `rescale(maxamp, samples)`
 """
 abstract type Signal end
 
@@ -521,8 +547,8 @@ Renders the given signal to a flat `Vector{Float32}`,
 over the given `dur_secs`. If the signal terminates before
 the duration is up, the result is truncated accordingly.
 """
-function render(s :: S, dur_secs; maxamp=0.5) where {S <: Signal}
-    dt = 1.0 / 48000.0
+function render(s :: S, dur_secs; sr=48000, maxamp=0.5) where {S <: Signal}
+    dt = 1.0 / sr
     tspan = 0.0:dt:dur_secs
     result = Vector{Float32}()
     for t in tspan
@@ -541,7 +567,7 @@ end
 Renders and writes raw `Float32` values to the given file.
 """
 function write(filename :: AbstractString, model::Sig, duration_secs :: AbstractFloat; sr=48000, maxamp=0.5) where {Sig <: Signal}
-    s = render(model, duration_secs; sr)
+    s = render(model, duration_secs; sr, maxamp)
     open(filename, "w") do f
         write(f, s)
     end
