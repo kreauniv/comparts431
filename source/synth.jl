@@ -545,15 +545,13 @@ function value(s :: Seq, t, dt)
 end
 
 struct Seg
-    v1 :: Float32
-    v2 :: Float32
     dur :: Float64
     interp :: Function
 end
 
 function interpolator(::Val{:linear}, v1::Float32, v2::Float32, dur::Float64)
-    slope = (v2 - v1) / s.dur
-    return (t::Float64) -> v1 + slope * t
+    delta = (v2 - v1)
+    return (t::Float64) -> v1 + delta * t
 end
 
 """
@@ -568,21 +566,21 @@ easeinout(t::Float64) = 0.5*(1.0+cos(π*(t - 1.0)))
 
 function interpolator(::Val{:ease}, v1::Float32, v2::Float32, dur::Float64)
     delta = v2 - v1
-    return (t::Float64) -> v1 + delta * easeinout(t/dur)
+    return (t::Float64) -> v1 + delta * easeinout(t)
 end
 
 function interpolator(::Val{:exp}, v1::Float32, v2::Float32, dur::Float64)
     v1 = log(v1)
     v2 = log(v2)
-    slope = (v2 - v1) / s.dur
-    return (t::Float64) -> exp(v1 + slope * t)
+    delta = (v2 - v1)
+    return (t::Float64) -> exp(v1 + delta * t)
 end
 
 function interpolator(::Val{:harmonic}, v1::Float32, v2::Float32, dur::Float64)
     v1 = 1.0/v1
     v2 = 1.0/v2
-    slope = (v2 - v1) / s.dur
-    return (t::Float64) -> 1.0/(v1 + slope * t)
+    delta = (v2 - v1)
+    return (t::Float64) -> 1.0/(v1 + delta * t)
 end
 
 """
@@ -607,7 +605,7 @@ The default interpolation is `:linear`.
 function Seg(v1 :: Number, v2 :: Number, dur :: Float64, interp::Symbol = :linear)
     v1f = Float32(v1)
     v2f = Float32(v2)
-    Seg(v1f, v2f, dur, interpolator(Val(interp), v1f, v2f, dur))
+    Seg(dur, interpolator(Val(interp), v1f, v2f, dur))
 end
 
 mutable struct Curve <: Signal
@@ -644,10 +642,10 @@ end
 
 done(s :: Curve, t, dt) = s.stop_at_end ? t >= s.tend : false
 function value(s :: Curve, t, dt)
-    if t >= s.tend || s.i > length(s.segments) return s.segments[end].v2 end
+    if t >= s.tend || s.i > length(s.segments) return s.segments[end].interp(1.0) end
     if t < s.times[s.i+1]
-        trel = t - s.times[s.i]
         seg = s.segments[s.i]
+        trel = (t - s.times[s.i]) / seg.dur
         return seg.interp(trel)
     else
         s.i += 1
@@ -664,7 +662,8 @@ the duration is up, the result is truncated accordingly.
 """
 function render(s :: S, dur_secs; sr=48000, maxamp=0.5) where {S <: Signal}
     dt = 1.0 / sr
-    tspan = 0.0:dt:dur_secs
+    N = floor(Int, dur_secs/dt)
+    tspan = dt .* (0:(N-1))
     result = Vector{Float32}()
     for t in tspan
         if !done(s, t, dt)
