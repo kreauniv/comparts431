@@ -1,3 +1,4 @@
+using Random
 
 """
     abstract type Signal end
@@ -85,7 +86,7 @@ mutable struct Aliasable{S <: Signal} <: Signal
     v :: Float32
 end
 
-aliasable(sig :: S) where {S <: Signal} = Aliasable{S}(sig, -1.0, 0.0f0)
+aliasable(sig :: S) where {S <: Signal} = Aliasable(sig, -1.0, 0.0f0)
 done(s :: Aliasable, t, dt) = done(s.sig, t, dt)
 function value(s :: Aliasable, t, dt)
     if t > s.t
@@ -103,11 +104,11 @@ value(s :: Konst, t, dt) = s.k
 done(s :: Konst, t, dt) = false
 
 """
-    konst(v::Number)
+    konst(v::Real)
 
 Makes a constant valued signal.
 """
-function konst(v::Number)
+function konst(v::Real)
     Konst(Float32(v))
 end
 
@@ -127,7 +128,7 @@ function done(s :: Phasor{F}, t, dt) where {F <: Signal}
 end
 
 """
-    phasor(f :: Number, phi0 = 0.0) = Phasor(konst(f), phi0)
+    phasor(f :: Real, phi0 = 0.0) = Phasor(konst(f), phi0)
     phasor(f :: F, phi0 = 0.0) where {F <: Signal} = Phasor(f, phi0)
 
 A "phasor" is a signal that goes from 0.0 to 1.0 linearly and then
@@ -135,7 +136,7 @@ loops back to 0.0. This is useful in a number of contexts including
 wavetable synthesis where the phasor can be used to lookup the
 wavetable.
 """
-phasor(f :: Number, phi0 = 0.0) = Phasor(konst(f), phi0)
+phasor(f :: Real, phi0 = 0.0) = Phasor(konst(f), phi0)
 phasor(f :: F, phi0 = 0.0) where {F <: Signal} = Phasor(f, phi0)
 
 mutable struct SinOsc{Mod <: Signal, Ph <: Signal} <: Signal
@@ -154,15 +155,15 @@ function value(s :: SinOsc, t, dt)
 end
 
 """
-    sinosc(m :: Number, f :: Number) = SinOsc(konst(m), clock(f))
-    sinosc(m :: Number, p :: P) where {P <: Signal} = SinOsc(konst(m), p)
+    sinosc(m :: Real, f :: Real) = SinOsc(konst(m), clock(f))
+    sinosc(m :: Real, p :: P) where {P <: Signal} = SinOsc(konst(m), p)
     sinosc(m :: M, p :: P) where {M <: Signal, P <: Signal} = SinOsc(m, p)
 
 A "sinosc" is a sinusoidal oscillator that can be controlled using a
 phasor or a clock to determine a time varying frequency.
 """
-sinosc(m :: Number, f :: Number) = SinOsc(konst(m), clock(f))
-sinosc(m :: Number, p :: P) where {P <: Signal} = SinOsc(konst(m), p)
+sinosc(m :: Real, f :: Real) = SinOsc(konst(m), clock(f))
+sinosc(m :: Real, p :: P) where {P <: Signal} = SinOsc(konst(m), p)
 sinosc(m :: M, p :: P) where {M <: Signal, P <: Signal} = SinOsc(m, p)
 
 mutable struct Mod{M <: Signal, S <: Signal} <: Signal
@@ -178,8 +179,8 @@ function value(s :: Mod, t, dt)
     value(s.mod, t, dt) * value(s.signal, t, dt)    
 end
 
-(Base.:*)(m :: Number, s :: S) where {S <: Signal} = Mod(konst(m),s)
-(Base.:*)(m :: M, s :: Number) where {M <: Signal} = Mod(m,konst(s))
+(Base.:*)(m :: Real, s :: S) where {S <: Signal} = Mod(konst(m),s)
+(Base.:*)(m :: M, s :: Real) where {M <: Signal} = Mod(m,konst(s))
 (Base.:*)(m :: M, s :: S) where {M <: Signal, S <: Signal} = Mod(m,s)
 
 mutable struct Mix{S1 <: Signal, S2 <: Signal} <: Signal
@@ -197,15 +198,15 @@ function value(s :: Mix, t, dt)
     s.w1 * value(s.s1, t, dt) + s.w2 * value(s.s2, t, dt)
 end
 
-function mix(w1 :: Number, s1 :: S1, w2 :: Number, s2 :: S2) where {S1 <: Signal, S2 <: Signal}
+function mix(w1 :: Real, s1 :: S1, w2 :: Real, s2 :: S2) where {S1 <: Signal, S2 <: Signal}
     Mix(Float32(w1), s1, Float32(w2), s2)
 end
 
-(Base.:+)(s1 :: Number, s2 :: S2) where {S2 <: Signal} = Mix(1.0f0, konst(s1), 1.0f0, s2)
-(Base.:+)(s1 :: S1, s2 :: Number) where {S1 <: Signal} = Mix(1.0f0, s1, 1.0f0, konst(s2))
+(Base.:+)(s1 :: Real, s2 :: S2) where {S2 <: Signal} = Mix(1.0f0, konst(s1), 1.0f0, s2)
+(Base.:+)(s1 :: S1, s2 :: Real) where {S1 <: Signal} = Mix(1.0f0, s1, 1.0f0, konst(s2))
 (Base.:+)(s1 :: S1, s2 :: S2) where {S1 <: Signal, S2 <: Signal} = Mix(1.0f0, s1, 1.0f0, s2)
-(Base.:-)(s1 :: Number, s2 :: S2) where {S2 <: Signal} = Mix(1.0f0, konst(s1), -1.0f0, s2)
-(Base.:-)(s1 :: S1, s2 :: Number) where {S1 <: Signal} = Mix(1.0f0, s1, -1.0f0, konst(s2))
+(Base.:-)(s1 :: Real, s2 :: S2) where {S2 <: Signal} = Mix(1.0f0, konst(s1), -1.0f0, s2)
+(Base.:-)(s1 :: S1, s2 :: Real) where {S1 <: Signal} = Mix(1.0f0, s1, -1.0f0, konst(s2))
 (Base.:-)(s1 :: S1, s2 :: S2) where {S1 <: Signal, S2 <: Signal} = Mix(1.0f0, s1, -1.0f0, s2)
 
 mutable struct Linterp <: Signal
@@ -226,13 +227,13 @@ function value(s :: Linterp, t, dt)
 end
 
 """
-    linterp(v1 :: Number, duration_secs :: Number, v2 :: Number)
+    linterp(v1 :: Real, duration_secs :: Real, v2 :: Real)
 
 Makes a signal that produces `v1` for `t < 0.0` and `v2` for `t > duration_secs`.
 In between the two times, it produces a linearly varying value between
 `v1` and `v2`.
 """
-linterp(v1 :: Number, duration_secs :: Number, v2 :: Number) = Linterp(Float32(v1), Float32(duration_secs), Float32(v2))
+linterp(v1 :: Real, duration_secs :: Real, v2 :: Real) = Linterp(Float32(v1), Float32(duration_secs), Float32(v2))
 
 mutable struct Expinterp <: Signal
     v1 :: Float32
@@ -244,13 +245,13 @@ mutable struct Expinterp <: Signal
 end
 
 """
-    expinterp(v1 :: Number, duration_secs :: Number, v2 :: Number)
+    expinterp(v1 :: Real, duration_secs :: Real, v2 :: Real)
 
 Similar to linterp, but does exponential interpolation from `v1` to `v2`
 over `duration_secs`. Note that both values must be `> 0.0` for this
 to be valid.
 """
-function expinterp(v1 :: Number, duration_secs :: Number, v2 :: Number)
+function expinterp(v1 :: Real, duration_secs :: Real, v2 :: Real)
     @assert v1 > 0.0
     @assert v2 > 0.0
     @assert durtation_secs > 0.0
@@ -309,10 +310,10 @@ end
 
 """
     adsr(
-        alevel :: Number, asecs :: Number, 
-        dsecs :: Number,
-        suslevel :: Number, sussecs :: Number,
-        relsecs :: Number
+        alevel :: Real, asecs :: Real, 
+        dsecs :: Real,
+        suslevel :: Real, sussecs :: Real,
+        relsecs :: Real
     )
 
 Makes an "attack-decay-sustain-release" envelope.
@@ -321,10 +322,10 @@ and the others stay linear.
 """
 
 function adsr(
-        alevel :: Number, asecs :: Number, 
-        dsecs :: Number,
-        suslevel :: Number, sussecs :: Number,
-        relsecs :: Number
+        alevel :: Real, asecs :: Real, 
+        dsecs :: Real,
+        suslevel :: Real, sussecs :: Real,
+        relsecs :: Real
     )
     ADSR(Float32(alevel), Float32(asecs), Float32(dsecs), Float32(suslevel), Float32(sussecs), Float32(relsecs),
          0.0f0, Float32(log2(alevel)),
@@ -437,9 +438,9 @@ end
 "Maps a function over the signal. The result is a signal."
 map(f, sig :: S) where {S <: Signal} = Map(f, sig)
 done(s :: Map, t, dt) = done(s.sig, t, dt)
-value(s :: Map, t, dt) = Float32(f(value(s.sig, t, dt)))
+value(s :: Map, t, dt) = Float32(s.f(value(s.sig, t, dt)))
 
-function linearmap(a1 :: Number, a2 :: Number, b1 :: Number, b2 :: Number, s :: S) where {S <: Signal}
+function linearmap(a1 :: Real, a2 :: Real, b1 :: Real, b2 :: Real, s :: S) where {S <: Signal}
     rate = (b2 - b1) / (a2 - a1)
     map(x -> b1 + rate * (x - a1), s)
 end
@@ -474,19 +475,19 @@ mutable struct Clock{S <: Signal} <: Signal
 end
 
 """
-    clock(speed :: Number, t_end :: Number = Inf; sampling_rate_Hz = 48000)
-    clock_bpm(tempo_bpm=60.0, t_end :: Number = Inf; sampling_rate_Hz = 48000)
-    clock_bpm(tempo_bpm :: S, t_end :: Number = Inf; sampling_rate_Hz = 48000) where {S <: Signal}
-    clock(speed :: S, t_end :: Number = Inf; sampling_rate_Hz = 48000) where {S <: Signal}
+    clock(speed :: Real, t_end :: Real = Inf; sampling_rate_Hz = 48000)
+    clock_bpm(tempo_bpm=60.0, t_end :: Real = Inf; sampling_rate_Hz = 48000)
+    clock_bpm(tempo_bpm :: S, t_end :: Real = Inf; sampling_rate_Hz = 48000) where {S <: Signal}
+    clock(speed :: S, t_end :: Real = Inf; sampling_rate_Hz = 48000) where {S <: Signal}
 
 Constructs different kinds of clocks. Clocks can be speed controlled.
 Clocks used for audio signals should be made using the `clock` constructor
 and those for scheduling purposes using `clock_bpm`.
 """
-clock(speed :: Number, t_end :: Number = Inf; sampling_rate_Hz = 48000) = Clock(konst(speed), 0.0, t_end, 1.0/sampling_rate_Hz)
-clock_bpm(tempo_bpm=60.0, t_end :: Number = Inf; sampling_rate_Hz = 48000) = Clock(konst(tempo_bpm/60.0), 0.0, t_end, 1.0/sampling_rate_Hz)
-clock_bpm(tempo_bpm :: S, t_end :: Number = Inf; sampling_rate_Hz = 48000) where {S <: Signal} = Clock((1.0/60.0) * tempo_bpm, 0.0, t_end, 1.0/sampling_rate_Hz)
-clock(speed :: S, t_end :: Number = Inf; sampling_rate_Hz = 48000) where {S <: Signal} = Clock(speed, 0.0, t_end, 1.0/sampling_rate_Hz)
+clock(speed :: Real, t_end :: Real = Inf; sampling_rate_Hz = 48000) = Clock(konst(speed), 0.0, t_end, 1.0/sampling_rate_Hz)
+clock_bpm(tempo_bpm=60.0, t_end :: Real = Inf; sampling_rate_Hz = 48000) = Clock(konst(tempo_bpm/60.0), 0.0, t_end, 1.0/sampling_rate_Hz)
+clock_bpm(tempo_bpm :: S, t_end :: Real = Inf; sampling_rate_Hz = 48000) where {S <: Signal} = Clock((1.0/60.0) * tempo_bpm, 0.0, t_end, 1.0/sampling_rate_Hz)
+clock(speed :: S, t_end :: Real = Inf; sampling_rate_Hz = 48000) where {S <: Signal} = Clock(speed, 0.0, t_end, 1.0/sampling_rate_Hz)
 
 done(c :: Clock, t, dt) = t > c.t_end || done(c.speed, t, dt)
 function value(c :: Clock, t, dt)
@@ -584,17 +585,18 @@ function interpolator(::Val{:harmonic}, v1::Float32, v2::Float32, dur::Float64)
 end
 
 """
-    Seg(v :: Number, dur :: Float64)
+    Seg(v :: Real, dur :: Float64)
 
 A segment that holds the value `v` for the duration `dur`.
 """
-function Seg(v :: Number, dur :: Float64)
+function Seg(v :: Real, dur :: Float64)
     vf = Float32(v)
-    Seg(vf, vf, dur, (t::Float64) -> vf)
+    Seg(dur, (t::Float64) -> vf)
 end
 
+
 """
-    Seg(v1 :: Number, v2 :: Number, dur :: Float64, interp::Symbol)
+    Seg(v1 :: Real, v2 :: Real, dur :: Float64, interp::Symbol)
 
 Constructs a general segment that takes value from `v1` to `v2`
 over `dur` using the specified interpolator `interp`.
@@ -602,11 +604,14 @@ over `dur` using the specified interpolator `interp`.
 `interp` can take on one of `[:linear, :exp, :cos, :harmonic]`.
 The default interpolation is `:linear`.
 """
-function Seg(v1 :: Number, v2 :: Number, dur :: Float64, interp::Symbol = :linear)
+function Seg(v1 :: Real, v2 :: Real, dur :: Float64, interp::Symbol = :linear)
     v1f = Float32(v1)
     v2f = Float32(v2)
     Seg(dur, interpolator(Val(interp), v1f, v2f, dur))
 end
+
+seg(v,dur) = Seg(v, dur)
+seg(v1,v2,dur,interp) = Seg(v1,v2,dur,interp)
 
 mutable struct Curve <: Signal
     segments :: Vector{Seg}
@@ -653,6 +658,37 @@ function value(s :: Curve, t, dt)
     end
 end
 
+mutable struct SegSeq <: Signal
+    dur :: Float64
+    mkseg :: Function
+    segix :: Int
+    currseg :: Seg
+    segstart :: Float64
+    segend :: Float64
+end
+
+"""
+    segseq(dur :: Float64, mkseg :: Function)
+
+Instead of specifying a fixed list of segments, you can use `segseq`
+to give a function that will be called to make segments on the fly
+as needed. The whole curve will last for the given `dur`.
+
+`mkseg` takes the form `mkseg(index::Int, t, dt) :: Seg` and is
+expected to keep producing segments until the curve's duration ends.
+"""
+segseq(dur :: Float64, mkseg :: Function) = SegSeq(dur, mkseg, 0, Seg(0.0, 0.0), 0.0, 0.0)
+done(s :: SegSeq, t, dt) = t > s.dur
+function value(s :: SegSeq, t, dt)
+    while t >= s.segend
+        s.segix += 1
+        s.currseg = mkseg(s.segix, t, dt)
+        s.segstart = t
+        s.segend = t + s.currseg.dur
+    end
+    s.currseg.interp((t - s.segstart) / s.currseg.dur)
+end
+
 """
     render(s :: S, dur_secs; maxamp=0.5) where {S <: Signal}
 
@@ -660,9 +696,9 @@ Renders the given signal to a flat `Vector{Float32}`,
 over the given `dur_secs`. If the signal terminates before
 the duration is up, the result is truncated accordingly.
 """
-function render(s :: S, dur_secs; sr=48000, maxamp=0.5) where {S <: Signal}
+function render(s :: S, dur_secs; sr=48000, normalize=false, maxamp=0.5) where {S <: Signal}
     dt = 1.0 / sr
-    N = floor(Int, dur_secs/dt)
+    N = floor(Int, dur_secs * sr)
     tspan = dt .* (0:(N-1))
     result = Vector{Float32}()
     for t in tspan
@@ -672,7 +708,7 @@ function render(s :: S, dur_secs; sr=48000, maxamp=0.5) where {S <: Signal}
             break
         end
     end
-    return rescale(maxamp, result)
+    return if normalize rescale(maxamp, result) else result end
 end
 
 """
@@ -682,6 +718,7 @@ Renders and writes raw `Float32` values to the given file.
 """
 function write(filename :: AbstractString, model::Sig, duration_secs :: AbstractFloat; sr=48000, maxamp=0.5) where {Sig <: Signal}
     s = render(model, duration_secs; sr, maxamp)
+    s = rescale(maxamp, s)
     open(filename, "w") do f
         write(f, s)
     end
@@ -727,4 +764,111 @@ end
 
 
 
+mutable struct Delay{S <: Signal, Tap <: Signal} <: Signal
+    sig :: S
+    tap :: Tap
+    maxdelay :: Float64
+    line :: Vector{Float32}
+    N :: Int
+    write_i :: Int
+end
+
+function delay(sig :: S, tap :: Tap, maxdelay :: Real; sr=48000) where {S <: Signal, Tap <: Signal}
+    N = round(Int, maxdelay * sr)
+    @assert N > 0
+    Delay(
+          sig,
+          tap,
+          Float64(N / sr),
+          zeros(Float32, N),
+          N,
+          0
+         )
+end
+
+done(s :: Delay, t, dt) = done(sig, t, dt) || done(tap, t, dt)
+
+function value(sig :: Delay, t, dt)
+    v = value(sig, t, dt)
+    sig.line[1+sig.write_i] = v
+    out = tap(sig, value(sig.tap, t, dt), t, dt)
+    sig.write_i = mod(sig.write_i + 1, sig.N)
+    return out
+end
+
+maxdelay(sig :: Delay) = sig.maxdelay
+
+function tap(sig :: Delay, at, t, dt)
+    ix = mod(at, 1.0) / dt
+    rixf = sig.write_i - ix
+    read_i = floor(Int, ixf)
+    frac = ixf - read_i
+    mread_i = mod(read_i, N)
+    out1 = sig.line[1+read_i]
+    out2 = sig.line[1+mod(read_i+1,sig.N)]
+    out1 + frac * (out2 - out1)
+end
+
+mutable struct Filter1{S <: Signal, G <: Signal} <: Signal
+    sig :: S
+    gain :: G
+    state :: Float32
+end
+
+filter1(s :: S, gain :: G) where {S <: Signal, G <: Signal} = Filter1(s, gain, 0.0f0)
+done(s :: Filter1, t, dt) = done(s.sig, t, dt)
+
+function value(s :: Filter1, t, dt)
+    v = value(s.sig, t, dt)
+    g = value(s.gain, t, dt)
+    ds = g * (v - s.state)
+    s.state += ds * dt
+    return s.state
+end
+
+mutable struct Filter2{S <: Signal, W <: Signal, G <: Signal} <: Signal
+    sig :: S
+    w :: W
+    g :: G
+    state :: Float32
+    dstate :: Float32
+end
+
+function filter2(s :: S, w :: W, g :: G) where {S <: Signal, W <: Signal, G <: Signal}
+    Filter2(s, w, g, 0.0f0, 0.0f0)
+end
+
+done(s :: Filter2, t, dt) = done(s.sig, t, dt) || done(s.w, t, dt) || done(s.g, t, dt)
+function value(s :: Filter2, t, dt)
+    out = s.state
+    v = value(s.sig, t, dt)
+    w = value(s.w, t, dt)
+    g = value(s.g, t, dt)
+    ds2 = w * w * (v - s.state) - 2 * w * g * s.dstate
+    dsa = s.dstate
+    dsb = dsa + ds2 * dt
+    s.state += 0.5 * (dsa + dsb) * dt
+    s.dstate = dsb
+    return out
+end
+
+function model(a,f)
+    af = aliasable(f)
+    ff = sinosc(0.1 * af, phasor(0.25 * af))
+    sinosc(a, phasor(af + ff))
+end
+
+mutable struct Noise{RNG <: AbstractRNG, Amp <: Signal} <: Signal
+    rng :: RNG
+    amp :: Amp
+end
+
+noise(rng :: RNG, amp :: A) where {RNG <: AbstractRNG, A <: Signal} = Noise(rng, amp)
+noise(rng :: RNG, amp :: Real) where {RNG <: AbstractRNG} = Noise(rng, konst(amp))
+
+done(s :: Noise, t, dt) = done(s.amp, t, dt)
+
+function value(s :: Noise, t, dt)
+    2.0 * value(s.amp, t, dt) * (rand(s.rng) - 0.5)
+end
 
