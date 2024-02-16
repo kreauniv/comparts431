@@ -32,3 +32,7 @@ pages: html
 	git commit -m "Updated gh-pages"
 	git push
 	git checkout main
+
+backup:
+	tar zcvf /tmp/comparts431.tar.gz source
+
