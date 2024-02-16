@@ -145,9 +145,250 @@ directly using ``from synth import *``.
 
 .. _synth.py: https://github.com/kreauniv/comparts431/blob/main/source/synth.py
 
-TODO
-
 .. [#dim] Compared to the 28.8 million dimensions mentioned earlier.
 
 .. [#ex28] Setting aside the variations in equipment involved in the delivery
    and experience of these productions.
+
+.. admonition:: **Principle**:
+
+    At this point, though we use some basic mathematical functions, for sound
+    and control of sound, we shift our view to "processes" rather than
+    "functions of time". A "process", for our purposes, that performs some
+    computation for every time step and, often but not necessarily, updates
+    some internal state in each step.
+
+    So from a programming perspective, we could look at a process as a pure
+    function of the form -- ``step(current_state, input, t, dt) -> (output,
+    nextstate)``.
+
+    **Generative processes**: These often have no ``input`` part and only produce
+    outputs that change over time.
+
+    **Filters**: In the general sense, a "filter" does some transformation of
+    an input, possibly combining multiple values from the *history* of the input
+    encountered in *earlier* processing steps to produce an output value
+    while updating its state along the way.
+
+    **Discreteness**: Since we're working with sampled digital sound, "time"
+    for us does not pass continuously, but in discrete steps and the time
+    interval between these steps is given by ``dt``. If we choose ``dt`` to be
+    small enough and run our process often enough, we can produce perceptually
+    continuous sound, much like a sequence of still pictures played
+    sufficiently quickly in time order gives us the illusion of a "movie".
+
+A pure tone as a process
+------------------------
+
+We saw earlier that we perceive sinusoidal waveforms as "colourless" and "pure"
+tones.  We can mathematically calculate them as :math:`a \sin(2\pi ft)`
+where :math:`a` is the amplitude of the sinusoid, :math:`f` is its "frequency"
+(i.e. number of oscillations per second) and :math:`t` is time. This is alright,
+but this view is not of much use to us because usually we want to vary the amplitude
+and the frequency over time to make **music**.
+
+You might think - "so what? I can just make :math:`a` and :math:`f` also be
+functions of time to make **music**, right?". Reasonable, but such a tone whose
+amplitude and frequency are determined by two functions :math:`a(t)` and
+:math:`f(t)` cannot be computed as :math:`a(t) \sin(2\pi f(t) t)` as we saw
+before. The real expression is :math:`a(t) \sin(2\pi\int{f(t)dt})`. This
+calculation, which often does not have a closed form expression in our
+situation, is both efficiently and effectively modeled as a **process**.
+
+For example, here is a process which produces a sinusoidal output whose
+amplitude and frequency can be varied from moment to moment.
+
+.. code-block:: python
+
+    def sinusoid(current_phase, a, f, t, dt):
+        next_phase = current_phase + f * dt
+        return (next_phase, a * math.sin(2 * math.pi * current_phase))
+
+In the above piece of code, we've expressed the process as a pure function.
+We'll need a harness to *run* such a process to actually produce the sinusoid
+wave as a result. We can do that by calling the state transforming function
+once for every time step like this --
+
+.. code-block:: python
+
+    def render(process, params, duration, samplingrate):
+        t = 0.0
+        result = []
+        a, f = params
+        initial_state = 0.0
+        state = initial_state
+        dt = 1.0 / samplingrate
+        while t < duration:
+            sample, state = process(state, a, f, t, dt)
+            t += dt
+        return result
+
+Above, we've assumed that ``a`` and ``f`` don't themselves vary over time.
+If they did, we can apply this approach recursively and treat them as 
+processes as well. For this reason, one simple approach that works well
+is to write functions that are "process constructors" which return a function
+that represents the process while using variables closed over by the function
+that internally maintain state that a user of such a process does not care about.
+In that mindset, we'd write the same process function above as a "process constructor"
+like this --
+
+.. code-block:: python
+
+    def constant(value):
+        """ A process that always outputs the same value. """
+        def tick(t, dt):
+            return value
+        return tick
+
+    def sinosc(amp, freq, initial_phase = 0.0):
+        # Prepare the initial state of the process.
+        phase = initial_phase
+
+        def tick(t, dt):
+            # 1. State closed over is indicated using `nonlocal`
+            nonlocal phase
+
+            # 2. Compute values of input processes.
+            a = amp(t, dt)
+            f = freq(t, dt)
+
+            # 3. Compute output value of this process.
+            v = a * math.sin(2 * math.pi * phase)
+
+            # 4. Update the process' state.
+            phase += f * dt
+
+            # return the computed value. 
+            return v
+        return tick
+
+Note that we're now treating the ``amp`` and ``freq`` arguments themselves
+as processes and the way we use such a "process" in this conception is to 
+call it as a function, supplying two arguments ``t`` and ``dt``.
+
+The four steps of such a process function indicated in the example above are
+common for all processes. In the above example, it is further possible to 
+split it into two processes - one that computes the ``phase`` as a pseudo
+time whose pace can vary over real time, and a sinusoid computed using that
+time. So we can express it as --
+
+.. code-block:: python
+
+    def phasor(freq, initial_phase = 0.0):
+        phase = initial_phase
+        def tick(t, dt):
+            nonlocal phase      #  1. Declare state
+            f = freq(t, dt)     #  2. Compute inputs
+            v = phase           #  3. Compute output
+            phase = math.fmod(phase + f * dt, 1.0) #  4. Update state
+            return v
+        return tick
+
+    def sinosc(amp, phase):
+        def tick(t, dt):
+            # 1. We don't have additional state beyond what
+            #    phase already stores. So no `nonlocal` here.
+
+            # 2. Compute inputs.
+            a = amp(t, dt)
+            p = phase(t, dt)
+
+            # 3. Compute output.
+            v = a * math.sin(2 * math.pi * p)
+
+            # 4. Since sinosc now does not have any additional
+            #    state, there is no "update state" step.
+            return v
+        return tick
+
+Now we can make a sine wave producing process using ``sinosc(constant(0.5), phasor(constant(300.0)))``
+for example. 
+
+.. admonition:: **Question**:
+
+    While the first "declare state" step needs to occur at the top of our
+    ``tick`` functions, can we change the order of the other steps? What are
+    the consequences of doing that?
+
+.. note:: The ``synth.py`` module is organized entirely in terms of processes
+   expressed in this manner ... and you can write your own as well, as long as
+   you stick to the same approach of making and returning ``tick`` functions
+   that take ``t`` and ``dt`` as arguments.
+
+Some processes defined in ``synth.py``
+--------------------------------------
+
+1. ``konst(k)`` This is what we called ``constant`` above.
+   This process always produces the same value ``k`` at all
+   time steps and is therefore "constant" in time.
+
+2. ``phasor(freq, initial_phase=0.0)`` This is also just as we
+   defined above and computes a signal varying linearly from
+   0.0 to 1.0 and jumping back to 0.0 depending on the passed
+   frequency. If you pass a number for ``freq`` instead of a
+   process, ``phasor`` will automatically convert it into a
+   constant process, for convenience. Most functions in this
+   module provide this convenience.
+
+3. ``sinosc(amp, phase)`` Just as we defined above.
+
+4. ``linterp(v1, dur_secs, v2)`` A process that produces
+   ``v1`` at first, and whose output linearly rises to ``v2``
+   over a time interval of ``dur_secs`` and then stays fixed
+   at ``v2``. This is a "linear interpolation".
+
+5. ``expinterp(v1, dur_secs, v2)`` Similar to ``linterp``,
+   but while ``linterp`` produces an arithmetic progression,
+   ``expinterp`` produces a geometric progression between
+   ``v1`` and ``v2``.
+
+6. ``expdecay(rate, attack_secs=0.025)`` This is a process
+   that computes an "exponential decay" that starts at 1.0 and
+   decays steadily to 0.0 over time at a rate determined by
+   the given ``rate`` process, which itself can vary over
+   time. Since this process starts abruptly at 1.0, it offers
+   a facility to smooth the starting by using a short linear
+   interpolation from 0.0 to 1.0 over ``attack_secs``.
+
+7. ``mix(list_of_processes)`` This produces a process whose result
+   is the sum of the results of all the given processes.
+
+8. ``modulate(process1, process2)`` This produces a process
+   whose result is the product of the results of the two given
+   processes.`
+
+9. ``adsr(attack_secs, attack_level, decay_secs,
+   sustain_level, release_secs)`` Determines an
+   "Attack-Decay-Sustain-Response" curve. Such a curve starts
+   at 0.0, rises over ``attack_secs`` to ``attack_level``,
+   then decays to ``sustain_level`` over ``decay_secs``, stays
+   at ``sustain_level`` for ``sustain_secs`` and then goes
+   back to 0.0 after ``release_secs``.
+
+10. ``sample(array_of_sample_values)`` Produces a process
+    that generates all the sample values in sequence.
+
+11. ``wavetable(table, amp, phasor)`` Samples the given table
+    (an array of sample values) using the given ``phasor``
+    process, and scales it using the ``amp`` process. This
+    lets us do simple "wave table synthesis" which underlies
+    most electronic sampled synthesizers today.
+
+12. ``map(f, process)`` Produces a process whose output
+    value is the function ``f`` applied to the output of the
+    given process.
+
+13. ``linearmap(a1, a2, b1, b2, process)`` A useful special case
+    of ``map`` that maps a value in the range :math:`[a1,a2]` 
+    to a value in the range :math:`[b1,b2]`.
+    
+14. ``noise(amp)`` Produces white noise of the given amplitude.
+
+See ``synth.py`` code for some other processes.
+
+
+
+
+
+
+
