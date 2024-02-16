@@ -36,3 +36,5 @@ pages: html
 backup:
 	tar zcvf /tmp/comparts431.tar.gz source
 
+restore:
+	tar zxvf /tmp/comparts431.tar.gz
