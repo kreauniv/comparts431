@@ -154,7 +154,6 @@ directly using <code class="docutils literal notranslate"><span class="pre">from
 the <a class="reference external" href="https://github.com/kreauniv/comparts431/blob/main/source/synth.py">synth.py</a> module. Install those using <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">numpy</span></code> followed
 by <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sounddevice</span></code>.</p>
 </div>
-<p>TODO</p>
 <aside class="footnote-list brackets">
 <aside class="footnote brackets" id="dim" role="doc-footnote">
 <span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">2</a><span class="fn-bracket">]</span></span>
@@ -166,6 +165,215 @@ by <code class="docutils literal notranslate"><span class="pre">pip</span> <span
 and experience of these productions.</p>
 </aside>
 </aside>
+<div class="admonition-principle admonition">
+<p class="admonition-title"><strong>Principle</strong>:</p>
+<p>At this point, though we use some basic mathematical functions, for sound
+and control of sound, we shift our view to “processes” rather than
+“functions of time”. A “process”, for our purposes, that performs some
+computation for every time step and, often but not necessarily, updates
+some internal state in each step.</p>
+<p>So from a programming perspective, we could look at a process as a pure
+function of the form – <code class="docutils literal notranslate"><span class="pre">step(current_state,</span> <span class="pre">input,</span> <span class="pre">t,</span> <span class="pre">dt)</span> <span class="pre">-&gt;</span> <span class="pre">(output,</span>
+<span class="pre">nextstate)</span></code>.</p>
+<p><strong>Generative processes</strong>: These often have no <code class="docutils literal notranslate"><span class="pre">input</span></code> part and only produce
+outputs that change over time.</p>
+<p><strong>Filters</strong>: In the general sense, a “filter” does some transformation of
+an input, possibly combining multiple values from the <em>history</em> of the input
+encountered in <em>earlier</em> processing steps to produce an output value
+while updating its state along the way.</p>
+<p><strong>Discreteness</strong>: Since we’re working with sampled digital sound, “time”
+for us does not pass continuously, but in discrete steps and the time
+interval between these steps is given by <code class="docutils literal notranslate"><span class="pre">dt</span></code>. If we choose <code class="docutils literal notranslate"><span class="pre">dt</span></code> to be
+small enough and run our process often enough, we can produce perceptually
+continuous sound, much like a sequence of still pictures played
+sufficiently quickly in time order gives us the illusion of a “movie”.</p>
+</div>
+</section>
+<section id="a-pure-tone-as-a-process">
+<h2>A pure tone as a process<a class="headerlink" href="#a-pure-tone-as-a-process" title="Permalink to this heading">¶</a></h2>
+<p>We saw earlier that we perceive sinusoidal waveforms as “colourless” and “pure”
+tones.  We can mathematically calculate them as <span class="math notranslate nohighlight">\(a \sin(2\pi ft)\)</span>
+where <span class="math notranslate nohighlight">\(a\)</span> is the amplitude of the sinusoid, <span class="math notranslate nohighlight">\(f\)</span> is its “frequency”
+(i.e. number of oscillations per second) and <span class="math notranslate nohighlight">\(t\)</span> is time. This is alright,
+but this view is not of much use to us because usually we want to vary the amplitude
+and the frequency over time to make <strong>music</strong>.</p>
+<p>You might think - “so what? I can just make <span class="math notranslate nohighlight">\(a\)</span> and <span class="math notranslate nohighlight">\(f\)</span> also be
+functions of time to make <strong>music</strong>, right?”. Reasonable, but such a tone whose
+amplitude and frequency are determined by two functions <span class="math notranslate nohighlight">\(a(t)\)</span> and
+<span class="math notranslate nohighlight">\(f(t)\)</span> cannot be computed as <span class="math notranslate nohighlight">\(a(t) \sin(2\pi f(t) t)\)</span> as we saw
+before. The real expression is <span class="math notranslate nohighlight">\(a(t) \sin(2\pi\int{f(t)dt})\)</span>. This
+calculation, which often does not have a closed form expression in our
+situation, is both efficiently and effectively modeled as a <strong>process</strong>.</p>
+<p>For example, here is a process which produces a sinusoidal output whose
+amplitude and frequency can be varied from moment to moment.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">sinusoid</span><span class="p">(</span><span class="n">current_phase</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+    <span class="n">next_phase</span> <span class="o">=</span> <span class="n">current_phase</span> <span class="o">+</span> <span class="n">f</span> <span class="o">*</span> <span class="n">dt</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">next_phase</span><span class="p">,</span> <span class="n">a</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">current_phase</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In the above piece of code, we’ve expressed the process as a pure function.
+We’ll need a harness to <em>run</em> such a process to actually produce the sinusoid
+wave as a result. We can do that by calling the state transforming function
+once for every time step like this –</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="n">process</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">samplingrate</span><span class="p">):</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="n">params</span>
+    <span class="n">initial_state</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">initial_state</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">samplingrate</span>
+    <span class="k">while</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">duration</span><span class="p">:</span>
+        <span class="n">sample</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">process</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="n">dt</span>
+    <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+</div>
+<p>Above, we’ve assumed that <code class="docutils literal notranslate"><span class="pre">a</span></code> and <code class="docutils literal notranslate"><span class="pre">f</span></code> don’t themselves vary over time.
+If they did, we can apply this approach recursively and treat them as
+processes as well. For this reason, one simple approach that works well
+is to write functions that are “process constructors” which return a function
+that represents the process while using variables closed over by the function
+that internally maintain state that a user of such a process does not care about.
+In that mindset, we’d write the same process function above as a “process constructor”
+like this –</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">constant</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; A process that always outputs the same value. &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">tick</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">tick</span>
+
+<span class="k">def</span> <span class="nf">sinosc</span><span class="p">(</span><span class="n">amp</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">initial_phase</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
+    <span class="c1"># Prepare the initial state of the process.</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="n">initial_phase</span>
+
+    <span class="k">def</span> <span class="nf">tick</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="c1"># 1. State closed over is indicated using `nonlocal`</span>
+        <span class="k">nonlocal</span> <span class="n">phase</span>
+
+        <span class="c1"># 2. Compute values of input processes.</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">amp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">freq</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+
+        <span class="c1"># 3. Compute output value of this process.</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">phase</span><span class="p">)</span>
+
+        <span class="c1"># 4. Update the process&#39; state.</span>
+        <span class="n">phase</span> <span class="o">+=</span> <span class="n">f</span> <span class="o">*</span> <span class="n">dt</span>
+
+        <span class="c1"># return the computed value.</span>
+        <span class="k">return</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">tick</span>
+</pre></div>
+</div>
+<p>Note that we’re now treating the <code class="docutils literal notranslate"><span class="pre">amp</span></code> and <code class="docutils literal notranslate"><span class="pre">freq</span></code> arguments themselves
+as processes and the way we use such a “process” in this conception is to
+call it as a function, supplying two arguments <code class="docutils literal notranslate"><span class="pre">t</span></code> and <code class="docutils literal notranslate"><span class="pre">dt</span></code>.</p>
+<p>The four steps of such a process function indicated in the example above are
+common for all processes. In the above example, it is further possible to
+split it into two processes - one that computes the <code class="docutils literal notranslate"><span class="pre">phase</span></code> as a pseudo
+time whose pace can vary over real time, and a sinusoid computed using that
+time. So we can express it as –</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">phasor</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">initial_phase</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="n">initial_phase</span>
+    <span class="k">def</span> <span class="nf">tick</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="k">nonlocal</span> <span class="n">phase</span>      <span class="c1">#  1. Declare state</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">freq</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>     <span class="c1">#  2. Compute inputs</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">phase</span>           <span class="c1">#  3. Compute output</span>
+        <span class="n">phase</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">fmod</span><span class="p">(</span><span class="n">phase</span> <span class="o">+</span> <span class="n">f</span> <span class="o">*</span> <span class="n">dt</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="c1">#  4. Update state</span>
+        <span class="k">return</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">tick</span>
+
+<span class="k">def</span> <span class="nf">sinosc</span><span class="p">(</span><span class="n">amp</span><span class="p">,</span> <span class="n">phase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">tick</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="c1"># 1. We don&#39;t have additional state beyond what</span>
+        <span class="c1">#    phase already stores. So no `nonlocal` here.</span>
+
+        <span class="c1"># 2. Compute inputs.</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">amp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">phase</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+
+        <span class="c1"># 3. Compute output.</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">p</span><span class="p">)</span>
+
+        <span class="c1"># 4. Since sinosc now does not have any additional</span>
+        <span class="c1">#    state, there is no &quot;update state&quot; step.</span>
+        <span class="k">return</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">tick</span>
+</pre></div>
+</div>
+<p>Now we can make a sine wave producing process using <code class="docutils literal notranslate"><span class="pre">sinosc(constant(0.5),</span> <span class="pre">phasor(constant(300.0)))</span></code>
+for example.</p>
+<div class="admonition-question admonition">
+<p class="admonition-title"><strong>Question</strong>:</p>
+<p>While the first “declare state” step needs to occur at the top of our
+<code class="docutils literal notranslate"><span class="pre">tick</span></code> functions, can we change the order of the other steps? What are
+the consequences of doing that?</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">synth.py</span></code> module is organized entirely in terms of processes
+expressed in this manner … and you can write your own as well, as long as
+you stick to the same approach of making and returning <code class="docutils literal notranslate"><span class="pre">tick</span></code> functions
+that take <code class="docutils literal notranslate"><span class="pre">t</span></code> and <code class="docutils literal notranslate"><span class="pre">dt</span></code> as arguments.</p>
+</div>
+</section>
+<section id="some-processes-defined-in-synth-py">
+<h2>Some processes defined in <code class="docutils literal notranslate"><span class="pre">synth.py</span></code><a class="headerlink" href="#some-processes-defined-in-synth-py" title="Permalink to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">konst(k)</span></code> This is what we called <code class="docutils literal notranslate"><span class="pre">constant</span></code> above.
+This process always produces the same value <code class="docutils literal notranslate"><span class="pre">k</span></code> at all
+time steps and is therefore “constant” in time.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">phasor(freq,</span> <span class="pre">initial_phase=0.0)</span></code> This is also just as we
+defined above and computes a signal varying linearly from
+0.0 to 1.0 and jumping back to 0.0 depending on the passed
+frequency. If you pass a number for <code class="docutils literal notranslate"><span class="pre">freq</span></code> instead of a
+process, <code class="docutils literal notranslate"><span class="pre">phasor</span></code> will automatically convert it into a
+constant process, for convenience. Most functions in this
+module provide this convenience.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sinosc(amp,</span> <span class="pre">phase)</span></code> Just as we defined above.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">linterp(v1,</span> <span class="pre">dur_secs,</span> <span class="pre">v2)</span></code> A process that produces
+<code class="docutils literal notranslate"><span class="pre">v1</span></code> at first, and whose output linearly rises to <code class="docutils literal notranslate"><span class="pre">v2</span></code>
+over a time interval of <code class="docutils literal notranslate"><span class="pre">dur_secs</span></code> and then stays fixed
+at <code class="docutils literal notranslate"><span class="pre">v2</span></code>. This is a “linear interpolation”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">expinterp(v1,</span> <span class="pre">dur_secs,</span> <span class="pre">v2)</span></code> Similar to <code class="docutils literal notranslate"><span class="pre">linterp</span></code>,
+but while <code class="docutils literal notranslate"><span class="pre">linterp</span></code> produces an arithmetic progression,
+<code class="docutils literal notranslate"><span class="pre">expinterp</span></code> produces a geometric progression between
+<code class="docutils literal notranslate"><span class="pre">v1</span></code> and <code class="docutils literal notranslate"><span class="pre">v2</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">expdecay(rate,</span> <span class="pre">attack_secs=0.025)</span></code> This is a process
+that computes an “exponential decay” that starts at 1.0 and
+decays steadily to 0.0 over time at a rate determined by
+the given <code class="docutils literal notranslate"><span class="pre">rate</span></code> process, which itself can vary over
+time. Since this process starts abruptly at 1.0, it offers
+a facility to smooth the starting by using a short linear
+interpolation from 0.0 to 1.0 over <code class="docutils literal notranslate"><span class="pre">attack_secs</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mix(list_of_processes)</span></code> This produces a process whose result
+is the sum of the results of all the given processes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">modulate(process1,</span> <span class="pre">process2)</span></code> This produces a process
+whose result is the product of the results of the two given
+processes.`</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">adsr(attack_secs,</span> <span class="pre">attack_level,</span> <span class="pre">decay_secs,</span>
+<span class="pre">sustain_level,</span> <span class="pre">release_secs)</span></code> Determines an
+“Attack-Decay-Sustain-Response” curve. Such a curve starts
+at 0.0, rises over <code class="docutils literal notranslate"><span class="pre">attack_secs</span></code> to <code class="docutils literal notranslate"><span class="pre">attack_level</span></code>,
+then decays to <code class="docutils literal notranslate"><span class="pre">sustain_level</span></code> over <code class="docutils literal notranslate"><span class="pre">decay_secs</span></code>, stays
+at <code class="docutils literal notranslate"><span class="pre">sustain_level</span></code> for <code class="docutils literal notranslate"><span class="pre">sustain_secs</span></code> and then goes
+back to 0.0 after <code class="docutils literal notranslate"><span class="pre">release_secs</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sample(array_of_sample_values)</span></code> Produces a process
+that generates all the sample values in sequence.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">wavetable(table,</span> <span class="pre">amp,</span> <span class="pre">phasor)</span></code> Samples the given table
+(an array of sample values) using the given <code class="docutils literal notranslate"><span class="pre">phasor</span></code>
+process, and scales it using the <code class="docutils literal notranslate"><span class="pre">amp</span></code> process. This
+lets us do simple “wave table synthesis” which underlies
+most electronic sampled synthesizers today.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">map(f,</span> <span class="pre">process)</span></code> Produces a process whose output
+value is the function <code class="docutils literal notranslate"><span class="pre">f</span></code> applied to the output of the
+given process.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">linearmap(a1,</span> <span class="pre">a2,</span> <span class="pre">b1,</span> <span class="pre">b2,</span> <span class="pre">process)</span></code> A useful special case
+of <code class="docutils literal notranslate"><span class="pre">map</span></code> that maps a value in the range <span class="math notranslate nohighlight">\([a1,a2]\)</span>
+to a value in the range <span class="math notranslate nohighlight">\([b1,b2]\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">noise(amp)</span></code> Produces white noise of the given amplitude.</p></li>
+</ol>
+<p>See <code class="docutils literal notranslate"><span class="pre">synth.py</span></code> code for some other processes.</p>
 </section>
 </section>
 
@@ -192,6 +400,8 @@ and experience of these productions.</p>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Synthesis foundations</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#periodic-circular-motion">Periodic circular motion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#towards-control">Towards control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#a-pure-tone-as-a-process">A pure tone as a process</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#some-processes-defined-in-synth-py">Some processes defined in <code class="docutils literal notranslate"><span class="pre">synth.py</span></code></a></li>
 </ul>
 </li>
 </ul>
