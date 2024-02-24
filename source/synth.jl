@@ -38,12 +38,18 @@ available to combine signals and numbers.
 - `adsr(alevel, asecs, dsecs, suslevel, sussecs, relses)`
 - `sample(samples; looping, loopto)`
 - `wavetable(table, amp, phasor)`
-- `map(f, signal)`
+- `waveshape(f, signal)`
 - `linearmap(a1, a2, b1, b2, signal)`
 - `clock(speed, t_end; sampling_rate_Hz)`
 - `clock_bpm(tempo_bpm, t_end; sampling_rate_Hz)`
 - `seq(clock, dur_signal_pair_vector)`
 - `curve(segments :: Vector{Seg}; stop=false)`
+- `delay(sig :: S, tap :: Tap, maxdelay :: Real; sr=48000)` 
+- `filter1(sig :: S, gain :: G)`
+- `filter2(sig :: S, freq :: F, damping :: G)`
+- `fir(filt :: Vector{Float32}, sig :: S)`
+- `noise(rng :: RNG, amp :: Union{A,Real}) where {A <: Signal}` 
+
 
 ## Utilities
 
@@ -430,19 +436,19 @@ function wavetable(table :: Vector{Float32}, amp :: Amp, phase :: Ph) where {Amp
     Wavetable(table, length(table), amp, phase)
 end
 
-mutable struct Map{S <: Signal} <: Signal
+mutable struct WaveShape{S <: Signal} <: Signal
     f :: Function
     sig :: S
 end
 
 "Maps a function over the signal. The result is a signal."
-map(f, sig :: S) where {S <: Signal} = Map(f, sig)
-done(s :: Map, t, dt) = done(s.sig, t, dt)
-value(s :: Map, t, dt) = Float32(s.f(value(s.sig, t, dt)))
+waveshape(f, sig :: S) where {S <: Signal} = WaveShape(f, sig)
+done(s :: WaveShape, t, dt) = done(s.sig, t, dt)
+value(s :: WaveShape, t, dt) = Float32(s.f(value(s.sig, t, dt)))
 
 function linearmap(a1 :: Real, a2 :: Real, b1 :: Real, b2 :: Real, s :: S) where {S <: Signal}
     rate = (b2 - b1) / (a2 - a1)
-    map(x -> b1 + rate * (x - a1), s)
+    waveshape(x -> b1 + rate * (x - a1), s)
 end
 
 """
@@ -800,7 +806,7 @@ maxdelay(sig :: Delay) = sig.maxdelay
 
 function tap(sig :: Delay, at, t, dt)
     ix = mod(at, 1.0) / dt
-    rixf = sig.write_i - ix
+    ixf = sig.write_i - ix
     read_i = floor(Int, ixf)
     frac = ixf - read_i
     mread_i = mod(read_i, N)
@@ -815,34 +821,39 @@ mutable struct Filter1{S <: Signal, G <: Signal} <: Signal
     state :: Float32
 end
 
-filter1(s :: S, gain :: G) where {S <: Signal, G <: Signal} = Filter1(s, gain, 0.0f0)
+function filter1(s :: S, gain :: G) where {S <: Signal, G <: Signal}
+    Filter1(s, gain, 0.0f0)
+end
 done(s :: Filter1, t, dt) = done(s.sig, t, dt)
 
 function value(s :: Filter1, t, dt)
     v = value(s.sig, t, dt)
     g = value(s.gain, t, dt)
     ds = g * (v - s.state)
+    out = s.state
     s.state += ds * dt
-    return s.state
+    return out
 end
 
-mutable struct Filter2{S <: Signal, W <: Signal, G <: Signal} <: Signal
+mutable struct Filter2{S <: Signal, F <: Signal, G <: Signal} <: Signal
     sig :: S
-    w :: W
+    f :: F
     g :: G
     state :: Float32
     dstate :: Float32
 end
 
-function filter2(s :: S, w :: W, g :: G) where {S <: Signal, W <: Signal, G <: Signal}
-    Filter2(s, w, g, 0.0f0, 0.0f0)
+function filter2(s :: S, f :: F, g :: G) where {S <: Signal, W <: Signal, G <: Signal}
+    Filter2(s, f, g, 0.0f0, 0.0f0)
 end
 
-done(s :: Filter2, t, dt) = done(s.sig, t, dt) || done(s.w, t, dt) || done(s.g, t, dt)
+done(s :: Filter2, t, dt) = done(s.sig, t, dt) || done(s.f, t, dt) || done(s.g, t, dt)
+
 function value(s :: Filter2, t, dt)
     out = s.state
     v = value(s.sig, t, dt)
-    w = value(s.w, t, dt)
+    f = value(s.f, t, dt)
+    w = 2 * π * f
     g = value(s.g, t, dt)
     ds2 = w * w * (v - s.state) - 2 * w * g * s.dstate
     dsa = s.dstate
@@ -850,6 +861,32 @@ function value(s :: Filter2, t, dt)
     s.state += 0.5 * (dsa + dsb) * dt
     s.dstate = dsb
     return out
+end
+
+mutable struct FIR{S <: Signal} <: Signal
+    sig :: S
+    filt :: Vector{Float32}
+    N :: Int
+    history :: Vector{Float32}
+    offset :: Int
+end
+
+function fir(filt :: Vector{Float32}, sig :: S) where {S <: Signal}
+    N = length(filt)
+    FIR(sig, filt, N, zeros(Float32, N), 1)
+end
+
+done(s :: FIR, t, dt) = done(s.filt)
+
+function value(s :: FIR{S}, t, dt) where {S <: Signal}
+    v = value(s.sig, t, dt)
+    s.history[s.offset] = v
+    f = sum(s.filt[i] * s.history[1+mod(s.offset-i,N)] for i in 1:N)
+    s.offset += 1
+    if s.offset > s.N
+        s.offset = 1
+    end
+    return f
 end
 
 function model(a,f)
