@@ -863,25 +863,37 @@ function value(s :: Filter2, t, dt)
     return out
 end
 
-mutable struct FIR{S <: Signal} <: Signal
+mutable struct FIR{S <: Signal, D <: Signal} <: Signal
     sig :: S
     filt :: Vector{Float32}
     N :: Int
+    dilation :: D
     history :: Vector{Float32}
     offset :: Int
 end
 
-function fir(filt :: Vector{Float32}, sig :: S) where {S <: Signal}
+function fir(filt :: Vector{Float32}, dilation :: D, sig :: S) where {S <: Signal, D <: Signal}
     N = length(filt)
-    FIR(sig, filt, N, zeros(Float32, N), 1)
+    FIR(sig, filt, N, dilation, zeros(Float32, N), 1)
 end
 
-done(s :: FIR, t, dt) = done(s.filt)
+done(s :: FIR, t, dt) = done(s.filt, t, dt) || done(s.dilation, t, dt)
+
+function dilatedfilt(s :: FIR, i)
+    di = 1 + (i-1) * s.dilation
+    dii = floor(Int, di)
+    difrac = di - dii
+    if dii < s.N
+        s.filt[dii] + difrac * (s.filt[dii+1] - s.filt[dii])
+    else
+        s.filt[dii]
+    end
+end
 
 function value(s :: FIR{S}, t, dt) where {S <: Signal}
     v = value(s.sig, t, dt)
     s.history[s.offset] = v
-    f = sum(s.filt[i] * s.history[1+mod(s.offset-i,N)] for i in 1:N)
+    f = sum(dilatedfilt(s,i) * s.history[1+mod(s.offset-i,N)] for i in 1:N)
     s.offset += 1
     if s.offset > s.N
         s.offset = 1
