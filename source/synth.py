@@ -457,21 +457,26 @@ def filter1(sig, freq=1.0):
     "frequency" except perhaps in a generalized mathematical sense.
     Simply think of it as 1/T. It has the units of 1/sec though,
     which should help.
+
+    This solves dx/dt = -ln(2)k(x-F)
+    Using dx/dt = (x[n+1] - x[n-1]) / 2dt and x = x[n],
+    we solve for x[n+1] in terms of x[n] and x[n-1]
+    to get x[n+1] - x[n-1] = -2 ln(2) dt k (x[n] - F[n]) 
     """
     freq = asmodel(freq)
-    s = 0.0
+    xn_1 = 0.0
+    xn = 0.0
     ln2 = math.log(2.0)
     def next(t, dt):
-        nonlocal s
+        nonlocal xn_1, xn
         v = sig(t, dt)
         f = freq(t, dt)
         if v == None or f == None:
             return None
-        g = ln2 * f
-        dsdt = g * (v - s)
-        out = s
-        s += dsdt * dt
-        return out
+        dg = 2 * ln2 * f * dt
+        xnp1 = xn_1 - dg * (xn - v)
+        xn_1, xn = xn, xnp1
+        return xn_1
     return next
 
 def filter2(sig, freq, damping=1.0/math.sqrt(2.0)):

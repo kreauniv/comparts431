@@ -818,21 +818,29 @@ end
 mutable struct Filter1{S <: Signal, G <: Signal} <: Signal
     sig :: S
     gain :: G
-    state :: Float32
+    xn_1 :: Float32
+    xn :: Float32
 end
 
 function filter1(s :: S, gain :: G) where {S <: Signal, G <: Signal}
-    Filter1(s, gain, 0.0f0)
+    Filter1(s, gain, 0.0f0, 0.0f0)
+end
+
+function filter1(s :: S, gain :: Real) where {S <: Signal}
+    Filter1(s, konst(gain), 0.0f0, 0.0f0)
 end
 done(s :: Filter1, t, dt) = done(s.sig, t, dt)
+
+const twoln2 = 2.0 * log(2)
 
 function value(s :: Filter1, t, dt)
     v = value(s.sig, t, dt)
     g = value(s.gain, t, dt)
-    ds = g * (v - s.state)
-    out = s.state
-    s.state += ds * dt
-    return out
+    dg = twoln2 * g * dt
+    xnp1 = s.xn_1 - dg * (s.xn - v)
+    s.xn_1 = s.xn
+    s.xn = xnp1
+    return s.xn_1
 end
 
 # Unit step function. 
