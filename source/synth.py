@@ -488,26 +488,33 @@ def filter2(sig, freq, damping=1.0/math.sqrt(2.0)):
     result in a decaying oscillation. Choose very small damping
     to get a sharp bandpass filter. damping can be seen 
     as 1/Q where Q is a "quality" of the filter.
+
+    We're solving d^2x/dt^2 + 2γω dx/dt + ω^2 x = ω^2 F
+    To do that, we replace dx/dt with (x[n+1] - x[n-1]) / (2dt)
+    and d^2x/dt^2 with (x[n+1]-2x[n]+x[n-1])/(dt^2)
+    and x with x[n] and solve for x[n+1] in terms of x[n]
+    and x[n-1].
     """
     freq = asmodel(freq)
     damping = asmodel(damping)
-    s = 0.0
-    dsdt = 0.0
+    xn_1 = 0.0 # x[n-1]
+    xn = 0.0   # x[n]
     def next(t, dt):
-        nonlocal s, dsdt
-        out = s
+        nonlocal xn_1, xn
         v = sig(t, dt)
         f = freq(t, dt)
         if v == None or f == None:
             return None
         w = 2 * math.pi * f
         g = damping(t, dt)
-        ds2 = w * w * (v - s) - 2 * w * g * dsdt
-        dsa = s
-        dsb = dsa + ds2 * dt
-        s += 0.5 * (dsa + dsb) * dt
-        dsdt = dsb
-        return out
+        dphi = w * dt
+        gdphi = g * dphi
+        dphi2 = dphi * dphi
+        # Calculate x[n+1] in terms of x[n] and x[n-1]
+        xnp1 = (dphi2 * v + (2 - dphi2) * xn + (gdphi - 1) * xn_1) / (1 + gdphi)
+        xn_1, xn = xn, xnp1
+        print(s2)
+        return s2
     return next
 
 

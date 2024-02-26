@@ -835,32 +835,46 @@ function value(s :: Filter1, t, dt)
     return out
 end
 
+# Unit step function. 
+struct U <: Signal end
+
+done(u :: U, t, dt) = false
+value(u :: U, t, dt) = if t > 0.0 1.0 else 0.0 end
+
 mutable struct Filter2{S <: Signal, F <: Signal, G <: Signal} <: Signal
     sig :: S
     f :: F
     g :: G
-    state :: Float32
-    dstate :: Float32
+    xn_1 :: Float32 # x[n-1]
+    xn :: Float32   # x[n]
 end
 
-function filter2(s :: S, f :: F, g :: G) where {S <: Signal, W <: Signal, G <: Signal}
+function filter2(s :: S, f :: F, g :: G) where {S <: Signal, F <: Signal, G <: Signal}
     Filter2(s, f, g, 0.0f0, 0.0f0)
+end
+
+function filter2(s :: S, f :: F, g :: Real) where {S <: Signal, F <: Signal}
+    filter2(s, f, konst(g))
+end
+
+function filter2(s :: S, f :: Real, g :: Real) where {S <: Signal}
+    filter2(s, konst(f), konst(g))
 end
 
 done(s :: Filter2, t, dt) = done(s.sig, t, dt) || done(s.f, t, dt) || done(s.g, t, dt)
 
 function value(s :: Filter2, t, dt)
-    out = s.state
     v = value(s.sig, t, dt)
     f = value(s.f, t, dt)
     w = 2 * π * f
     g = value(s.g, t, dt)
-    ds2 = w * w * (v - s.state) - 2 * w * g * s.dstate
-    dsa = s.dstate
-    dsb = dsa + ds2 * dt
-    s.state += 0.5 * (dsa + dsb) * dt
-    s.dstate = dsb
-    return out
+    dϕ = w * dt
+    gdϕ = g * dϕ
+    dϕ² = dϕ * dϕ
+    xnp1 = (dϕ² * v + (2.0 - dϕ²) * s.xn + (gdϕ - 1.0) * s.xn_1) / (1.0 + gdϕ)
+    s.xn_1 = s.xn
+    s.xn = xnp1
+    return s.xn_1
 end
 
 mutable struct FIR{S <: Signal, D <: Signal} <: Signal
@@ -901,6 +915,15 @@ function value(s :: FIR{S}, t, dt) where {S <: Signal}
     end
     return f
 end
+
+# Turns a normal function of time into a signal.
+struct Fn <: Signal
+    f :: Function
+end
+
+done(f :: Fn, t, dt) = false
+value(f :: Fn, t, dt) = f.f(t)
+fn(f) = Fn(f)
 
 function model(a,f)
     af = aliasable(f)
