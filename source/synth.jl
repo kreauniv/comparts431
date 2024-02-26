@@ -868,13 +868,14 @@ mutable struct FIR{S <: Signal, D <: Signal} <: Signal
     filt :: Vector{Float32}
     N :: Int
     dilation :: D
+    N2 :: Int
     history :: Vector{Float32}
     offset :: Int
 end
 
 function fir(filt :: Vector{Float32}, dilation :: D, sig :: S) where {S <: Signal, D <: Signal}
     N = length(filt)
-    FIR(sig, filt, N, dilation, zeros(Float32, N), 1)
+    FIR(sig, filt, N, dilation, 2N, zeros(Float32, 2N), 1)
 end
 
 done(s :: FIR, t, dt) = done(s.filt, t, dt) || done(s.dilation, t, dt)
@@ -893,9 +894,9 @@ end
 function value(s :: FIR{S}, t, dt) where {S <: Signal}
     v = value(s.sig, t, dt)
     s.history[s.offset] = v
-    f = sum(dilatedfilt(s,i) * s.history[1+mod(s.offset-i,N)] for i in 1:N)
+    f = sum(dilatedfilt(s,i) * s.history[1+mod(s.offset-i, s.N2)] for i in 1:N)
     s.offset += 1
-    if s.offset > s.N
+    if s.offset > s.N2
         s.offset = 1
     end
     return f
