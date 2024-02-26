@@ -513,8 +513,7 @@ def filter2(sig, freq, damping=1.0/math.sqrt(2.0)):
         # Calculate x[n+1] in terms of x[n] and x[n-1]
         xnp1 = (dphi2 * v + (2 - dphi2) * xn + (gdphi - 1) * xn_1) / (1 + gdphi)
         xn_1, xn = xn, xnp1
-        print(s2)
-        return s2
+        return xn_1
     return next
 
 
