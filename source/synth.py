@@ -4,6 +4,7 @@ from array import array
 import os
 import math
 import sounddevice as sd
+from random import random
 
 sampling_rate_Hz = 48000
 
@@ -255,84 +256,6 @@ def expdecay(rate, attack_secs=0.025):
         return factor
     return next
 
-def seq(tempo, segments):
-    """
-    Plays the given sequence.
-    segments is an array of pairs (time_to_next_secs, model) 
-    A particular model can be None to indicate a gap.
-    Think of this as playing a series of "notes". The
-    models may overlap in time, depending on what you give.
-    """
-    N = len(segments)
-    tempo = asmodel(tempo)
-    times = [0.0]
-    realtimes = []
-    active_voice_ix = 0
-    i = 0
-    t = 0.0
-    def next(realt, dt):
-        if active_voice_ix >= N:
-            return None
-        if realt <= 0.0:
-            return 0.0
-        s = 0.0
-        for k in range(active_voice_ix,i+1):
-            v = segments[k][1](realt - realtimes[k], dt)
-            if v == None:
-                if k == active_voice_ix:
-                    active_voice_ix += 1
-            else:
-                s += v
-        sp = tempo(realt, dt)
-        t += (1.0 if isnothing(sp) else (sp/60.0)) * dt
-        if i+1 < len(times) and t >= times[i+1]:
-            i += 1
-            realtimes[i] = realt + dt
-        return s
-    return next
- 
-def seq_slower_version(tempo, segments):
-    """
-    Plays the given sequence.
-    segments is an array of pairs (time_to_next_secs, model) 
-    A particular model can be None to indicate a gap.
-    Think of this as playing a series of "notes". The
-    models may overlap in time, depending on what you give.
-    """
-    tempo = asmodel(tempo)
-    times = [0.0]
-    voices = []
-    nextvoices = []
-    for s in segments:
-        times.append(times[-1] + s[0])
-    i = 0
-    t = 0.0
-
-    def next(realt, dt):
-        nonlocal times, voices, nextvoices, i, t
-        if t < 0.0:
-            return 0.0
-        if i < len(segments) and t >= times[i]:
-            if segments[i][1] != None:
-                voices.append((realt, segments[i]))
-            i = i + 1
-        if len(voices) == 0:
-            if t >= times[-1]:
-                return None
-            return 0.0
-        s = 0.0
-        for v in voices:
-            vs = v[1][1](realt - v[0], dt)
-            if vs != None:
-                s += vs
-                nextvoices.append(v)
-        voices.clear()
-        nextvoices, voices = voices, nextvoices
-        sp = tempo(realt, dt)
-        t += (sp/60.0) * dt if sp != None else dt
-        return s
-    return next
-
 def mix(models):
     """
     Mixes down the array of models by adding all their outputs.
@@ -518,5 +441,177 @@ def maketable(L, f):
     L is the number of samples in the table.
     """
     return np.array([f(t/L) for t in range(0, L)], dtype='f')
+
+def filter1(sig, freq=1.0):
+    """
+    A first order filter, a.k.a. "exponential moving average filter".
+    For a freq of 1.0, a step signal will result in half the change
+    covered in one second. For freq of 2.0, it will be covered in 
+    1/2 sec and so on. In other words, freq is 1/T where T is the
+    "time constant" of the filter. Note that freq is allowed to vary
+    over time and therefore you can pass a signal as well as the
+    freq. However, the "sig" argument cannot be a number, since it
+    doesn't make much sense to do that.
+
+    PS: It doesn't quite make sense to call the second argument
+    "frequency" except perhaps in a generalized mathematical sense.
+    Simply think of it as 1/T. It has the units of 1/sec though,
+    which should help.
+    """
+    freq = asmodel(freq)
+    s = 0.0
+    ln2 = math.log(2.0)
+    def next(t, dt):
+        nonlocal s
+        v = sig(t, dt)
+        f = freq(t, dt)
+        if v == None or f == None:
+            return None
+        g = ln2 * f
+        dsdt = g * (v - s)
+        out = s
+        s += dsdt * dt
+        return out
+    return next
+
+def filter2(sig, freq, damping=1.0/math.sqrt(2.0)):
+    """
+    A "second order filter" defined by a "centre frequency"
+    and a dimensionless damping factor. "freq" is in Hz
+    and "damping" you need to choose according to need.
+    damping >  is a "over damped" filter that will behave
+    like a first order filter applied twice. damping < 1.0
+    will cause some oscillation, where damping = 1/√2 will
+    result in a "critically damped" oscillation which is
+    excellent for following another signal while also
+    filtering it according to the frequency. damping < 1/√2 will
+    result in a decaying oscillation. Choose very small damping
+    to get a sharp bandpass filter. damping can be seen 
+    as 1/Q where Q is a "quality" of the filter.
+    """
+    freq = asmodel(freq)
+    damping = asmodel(damping)
+    s = 0.0
+    dsdt = 0.0
+    def next(t, dt):
+        nonlocal s, dsdt
+        out = s
+        v = sig(t, dt)
+        f = freq(t, dt)
+        if v == None or f == None:
+            return None
+        w = 2 * math.pi * f
+        g = damping(t, dt)
+        ds2 = w * w * (v - s) - 2 * w * g * dsdt
+        dsa = s
+        dsb = dsa + ds2 * dt
+        s += 0.5 * (dsa + dsb) * dt
+        dsdt = dsb
+        return out
+    return next
+
+
+def fir(sig, filter):
+    """
+    A "finite impulse response" filter. Given the filter
+    coefficients in "filter", applies it to the given signal using
+    a "convolution" calculation. Note that the larger the filter
+    array, the more computationally expensive this filter becomes.
+    That is not necessarily the case in real systems, but I've
+    kept it simple so the logic can be followed easily, rather
+    than complicate calculations using performance optimizations.
+    """
+    N = len(filter)
+    N2 = 2 * N
+    history = [0.0 for i in range(N2)]
+    i = 0
+    def next(t, dt):
+        nonlocal i
+        v = sig(t, dt)
+        if v == None:
+            return None
+        history[i] = v
+        # Note that here we're using python's wrap around indexing
+        # semantics for arrays. Since history is twice as long as
+        # the filter array, wrapping around gets us the right range
+        # of values from the past.
+        out = sum(filter[j] * history[i-j] for j in range(N))
+        i = (i + 1) % N2
+        return out
+    return next
+
+def clock(speed = 1.0, t_end = math.inf):
+    """
+    Useful to provide a variable speed clock that
+    can drive the scheduler. If speed is 2.0, the clock
+    runs twice as fast as real time. You can use t_end
+    to indicate when the clock should end, which will usually
+    cause all signals dependent on the clock to also end.
+    """
+    myt = 0.0
+    speed = asmodel(speed)
+    def next(t, dt):
+        nonlocal myt
+        out = myt
+        if myt >= t_end:
+            return None
+        s = speed(t, dt)
+        if s == None:
+            return None
+        myt += s * dt
+        return out
+    return next
+
+def clip(dur_secs, sig):
+    """
+    Clips the given signal to the given duration.
+    So even if sig is an infinite duration signal,
+    the clipped version will end after dur_secs.
+    Useful with scheduler below.
+    """
+    def next(t, dt):
+        if t >= dur_secs:
+            return None
+        return sig(t, dt);
+    return next
+
+def schedule(clock, segs):
+    """
+    A simple sample-accurate scheduler. The variable speed
+    clock can guide the scheduling times without affecting
+    the rendering clock. Use the clock() function to make
+    such clocks.
+
+    The "segs" is an array of (dur, model) pairs. For example,
+    [(1.0, sinosc(0.25, phasor(300))), (0.5, sinosc(0.25, phasor(600)))]
+    will start a 300Hz oscillator, wait for 1 second and then
+    start a 600Hz oscillator alongside.
+    """
+    playing = 0
+    curr = 0
+    elapsed = 0.0
+    playstart = [0.0 for i in segs]
+    N = len(segs)
+
+    def next(t, dt):
+        nonlocal playing, curr, elapsed
+        myt = clock(t, dt)
+        if myt == None or playing >= N:
+            return None
+        while curr < N and myt - elapsed >= segs[curr][0]:
+            elapsed += segs[curr][0]
+            playstart[curr+1] = t
+            curr += 1
+        out = 0.0
+        for i in range(playing, curr+1):
+            v = segs[i][1](t - playstart[i], dt)
+            if v == None and playing == i:
+                playing += 1
+                continue
+            if v != None:
+                out += v
+        return out
+
+    return next
 
 
