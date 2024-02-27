@@ -310,19 +310,33 @@ def adsr(attack_secs, attack_level, decay_secs, sustain_level, sustain_secs, rel
     t2 = t1 + decay_secs
     t3 = t2 + sustain_secs
     t4 = t3 + release_secs
+    vattack = 0.0
+    dvattack = attack_level / attack_secs
+    lvdecay = math.log2(attack_level)
+    dlvdecay = math.log2(sustain_level / attack_level) / decay_secs
+    lvrelease = math.log2(sustain_level)
+    dlvrelease = -1.0 / release_secs
     def next(t, dt):
-        nonlocal t0, t1, t2, t3, t4
+        nonlocal vattack, lvdecay, lvrelease
         if t <= 0.0:
             return 0.0
-        if t <= t1:
-            return attack_level * t / t1
-        if t <= t2:
-            return attack_level + (t - t1) * (sustain_level - attack_level) / decay_secs
-        if t <= t3:
+        elif t <= t1:
+            out = vattack
+            vattack += dvattack * dt
+            return out
+        elif t <= t2:
+            out = math.pow(2.0, lvdecay)
+            lvdecay += dlvdecay * dt
+            return out
+        elif t <= t3:
+            out = sustain_level
             return sustain_level
-        if t <= t4:
-            return sustain_level + (t - t3) * (0.0 - sustain_level) / release_secs
-        return None
+        else:
+            if lvrelease < -15.0:
+                return None
+            out = math.pow(2.0, lvrelease)
+            lvrelease += dlvrelease * dt
+            return out
     return next
 
 def sample(samples, looping=False, loopto=0.0):
