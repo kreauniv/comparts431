@@ -345,7 +345,7 @@ function adsr(
 end
 
 function done(s :: ADSR, t, dt)
-    (log2(s.sustain_level) - (t - s.t3) / s.release_secs) < -15.0 
+    t > s.t3 && s.logv < -15.0
 end
 
 function value(s :: ADSR, t, dt)

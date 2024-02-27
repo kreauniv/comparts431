@@ -90,16 +90,16 @@ function expdecay(rate) {
 function adsr(alevel, asecs, dsecs, suslevel, sussecs, relsecs) {
     let aval = 0.0;
     let d_aval = alevel / asecs;
-    let dval = 0.0;
+    let dval = Math.log(alevel);
     let d_dval = Math.log(suslevel / alevel) / dsecs;
-    let relval = 0.0;
-    let d_relval = Math.log(0.5) / relsecs;
+    let relval = Math.log2(suslevel);
+    let d_relval = -1.0 / relsecs;
     let t1 = asecs;
     let t2 = t1 + dsecs;
     let t3 = t2 + sussecs;
     return {
         done(t, dt) {
-            return relval < -15.0;
+            return t > t3 && relval < -15.0;
         },
         value(t, dt, w) {
             let v = 0.0;
@@ -112,7 +112,7 @@ function adsr(alevel, asecs, dsecs, suslevel, sussecs, relsecs) {
             } else if (t < t3) {
                 return suslevel;
             } else {
-                v = Math.exp(relval);
+                v = Math.pow(2.0,relval);
                 relval += d_relval * dt;
             }
             return v;
