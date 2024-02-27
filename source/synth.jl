@@ -924,6 +924,157 @@ function value(s :: FIR{S}, t, dt) where {S <: Signal}
     return f
 end
 
+mutable struct Biquad{Ty, S <: Signal, F <: Signal, Q <: Signal} <: Signal
+    ty :: Ty
+    sig :: S
+    freq :: F
+    q :: Q
+    xn_1 :: Float32
+    xn_2 :: Float32
+    yn_1 :: Float32
+    yn_2 :: Float32
+    w0 :: Float32
+    cw0 :: Float32
+    sw0 :: Float32
+    alpha :: Float32
+    b0 :: Float32
+    b1 :: Float32
+    b2 :: Float32
+    a0 :: Float32
+    a1 :: Float32
+    a2 :: Float32
+end
+
+function Biquad(ty::Val, sig :: S, freq :: Konst, q :: Konst, dt) where {S <: Signal}
+    computebiquadcoeffs(ty,
+        Biquad(ty, sig, freq, q, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        value(freq, 0.0, 0.0),
+        value(q, 0.0, 0.0),
+        dt)
+end
+
+function Biquad(ty::Val, sig :: S, freq :: F, q :: Q) where {S <: Signal, F <: Real, Q <: Real}
+    Biquad(ty, sig, konst(freq), konst(q), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+end
+
+function Biquad(ty::Val, sig :: S, freq :: F, q :: Q) where {S <: Signal, F <: Signal, Q <: Real}
+    Biquad(ty, sig, freq, konst(q), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+end
+
+function Biquad(ty::Val, sig :: S, freq :: F, q :: Q) where {S <: Signal, F <: Real, Q <: Signal}
+    Biquad(ty, sig, konst(freq), q, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+end
+
+function Biquad(ty::Val, sig :: S, freq :: F, q :: Q) where {S <: Signal, F <: Signal, Q <: Signal}
+    Biquad(ty, sig, freq, q, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+end
+
+function computebiquadcoeffs(::Val{:lpf}, c :: Biquad, f, q, dt)
+    w0 = 2 * pi * f * dt
+    sw0, cw0 = sincos(w0)
+    c.w0 = w0
+    c.sw0 = sw0
+    c.cw0 = cw0
+    c.alpha = sw0 / (2 * q)
+    c.b1 = 1 - cw0
+    c.b0 = c.b2 = c.b1/2
+    c.a0 = 1 + c.alpha
+    c.a1 = -2 * cw0
+    c.a2 = 1 - c.alpha
+    c
+end
+
+function computebiquadcoeffs(::Val{:hpf}, c :: Biquad, f, q, dt)
+    w0 = 2 * pi * f * dt
+    sw0, cw0 = sincos(w0)
+    c.w0 = w0
+    c.sw0 = sw0
+    c.cw0 = cw0
+    c.alpha = sw0 / (2 * q)
+    c.b0 = (1+cw0) / 2
+    c.b1 = -2.0 * c.b0
+    c.b2 = c.b0
+    c.a0 = 1 + c.alpha
+    c.a1 = -2 * cw0
+    c.a2 = 1 - c.alpha
+    c
+end
+
+function computebiquadcoeffs(::Val{:bpf}, c :: Biquad, f, q, dt)
+    w0 = 2 * pi * f * dt
+    sw0, cw0 = sincos(w0)
+    c.w0 = w0
+    c.sw0 = sw0
+    c.cw0 = cw0
+    c.alpha = sw0 / (2 * q)
+    c.b0 = sw0 / 2
+    c.b1 = 0.0
+    c.b2 = -c.b0
+    c.a0 = 1 + c.alpha
+    c.a1 = -2 * cw0
+    c.a2 = 1 - c.alpha
+    c
+end
+
+function computebiquadcoeffs(::Val{:bpf0}, c :: Biquad, f, q, dt)
+    w0 = 2 * pi * f * dt
+    sw0, cw0 = sincos(w0)
+    c.w0 = w0
+    c.sw0 = sw0
+    c.cw0 = cw0
+    c.alpha = sw0 / (2 * q)
+    c.b0 = c.alpha
+    c.b1 = 0.0
+    c.b2 = -c.b0
+    c.a0 = 1 + c.alpha
+    c.a1 = -2 * cw0
+    c.a2 = 1 - c.alpha
+    c
+end
+
+
+done(s :: Biquad, t, dt) = done(s.sig, t, dt) || done(s.freq, t, dt) || done(s.q, t, dt)
+
+function value(s :: Biquad{Ty,S,Konst,Konst}, t, dt) where {Ty, S <: Signal}
+    xn = value(s.sig, t, dt)
+    yn = (s.b0 * xn + s.b1 * s.xn_1 + s.b2 * s.xn_2 - s.a1 * s.yn_1 - s.a2 * s.yn_2) / s.a0
+    s.xn_2 = s.xn_1
+    s.xn_1 = xn
+    s.yn_2 = s.yn_1
+    s.yn_1 = yn
+    return yn
+end
+
+function value(s :: Biquad, t, dt)
+    xn = value(s.sig, t, dt)
+    f = value(s.freq, t, dt)
+    q = value(s.q, t, dt)
+    computebiquadcoeffs(s.ty, s, f, q)
+    yn = (s.b0 * xn + s.b1 * s.xn_1 + s.b2 * s.xn_2 - s.a1 * s.yn_1 - s.a2 * s.yn_2) / s.a0
+    s.xn_2 = s.xn_1
+    s.xn_1 = xn
+    s.yn_2 = s.yn_1
+    s.yn_1 = yn
+    return yn
+end
+
+function lpf(sig :: S, freq, q, dt = 1/48000) where {S <: Signal}
+    Biquad(Val(:lpf), sig, freq, q, dt)
+end
+
+function bpf(sig :: S, freq, q, dt = 1/48000) where {S <: Signal}
+    Biquad(Val(:bpf), sig, freq, q, dt)
+end
+
+function bpf0(sig :: S, freq, q, dt = 1/48000) where {S <: Signal}
+    Biquad(Val(:bpf0), sig, freq, q, dt)
+end
+
+function hpf(sig :: S, freq, q, dt = 1/48000) where {S <: Signal}
+    Biquad(Val(:hpf), sig, freq, q, dt)
+end
+
+
 # Turns a normal function of time into a signal.
 struct Fn <: Signal
     f :: Function
@@ -952,4 +1103,17 @@ done(s :: Noise, t, dt) = done(s.amp, t, dt)
 function value(s :: Noise, t, dt)
     2.0 * value(s.amp, t, dt) * (rand(s.rng) - 0.5)
 end
+
+function heterodyne(sig, fc, bw)
+    sigm = sinosc(sig, phasor(fc))
+    lpf(sigm, bw, 5.0)
+end
+
+function vocoder(sig, f0, N, fnew)
+    asig = aliasable(sig)
+    bw = min(20.0, f0 * 0.1, fnew * 0.1)
+    reduce(+, sinosc(heterodyne(asig, f0 * k, bw), phasor(fnew * k)) for k in 1:N)
+end
+
+
 
