@@ -565,6 +565,140 @@ def fir(sig, filter):
         return out
     return next
 
+def lpf(sig, freq, Q):
+    """
+    Ref https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html
+    """
+    freq = asmodel(freq)
+    Q = asmodel(Q)
+    xn_1 = 0.0
+    xn_2 = 0.0
+    yn_1 = 0.0
+    yn_2 = 0.0
+    def next(t, dt):
+        nonlocal xn_1, xn_2, yn_1, yn_2
+        xn = sig(t, dt)
+        f = freq(t, dt)
+        q = Q(t, dt)
+        if xn == None or f == None or Q == None:
+            return None
+        w0 = 2 * math.pi * f * dt
+        cw0 = math.cos(w0)
+        sw0 = math.sin(w0)
+        alpha = sw0 / (2 * q)
+        b1 = 1 - cw0
+        b0 = b2 = b1/2
+        a0 = 1 + alpha
+        a1 = -2 * cw0
+        a2 = 1 - alpha
+        yn = (b0 * xn + b1 * xn_1 + b2 * xn_2 - a1 * yn_1 - a2 * yn_2) / a0
+        xn_2, xn_1 = xn_1, xn
+        yn_2, yn_1 = yn_1, yn
+        return yn
+    return next
+
+def bpf(sig, freq, Q):
+    """
+    Ref https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html
+    """
+    freq = asmodel(freq)
+    Q = asmodel(Q)
+    xn_1 = 0.0
+    xn_2 = 0.0
+    yn_1 = 0.0
+    yn_2 = 0.0
+    def next(t, dt):
+        nonlocal xn_1, xn_2, yn_1, yn_2
+        xn = sig(t, dt)
+        f = freq(t, dt)
+        q = Q(t, dt)
+        if xn == None or f == None or Q == None:
+            return None
+        w0 = 2 * math.pi * f * dt
+        cw0 = math.cos(w0)
+        sw0 = math.sin(w0)
+        alpha = sw0 / (2 * q)
+        b0 = sw0 / 2
+        b1 = 0.0
+        b2 = -b0
+        a0 = 1 + alpha
+        a1 = -2 * cw0
+        a2 = 1 - alpha
+        yn = (b0 * xn + b1 * xn_1 + b2 * xn_2 - a1 * yn_1 - a2 * yn_2) / a0
+        xn_2, xn_1 = xn_1, xn
+        yn_2, yn_1 = yn_1, yn
+        return yn
+    return next
+
+def bpf0(sig, freq, Q):
+    """
+    Ref https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html
+    Zero dB gain at peak.
+    """
+    freq = asmodel(freq)
+    Q = asmodel(Q)
+    xn_1 = 0.0
+    xn_2 = 0.0
+    yn_1 = 0.0
+    yn_2 = 0.0
+    def next(t, dt):
+        nonlocal xn_1, xn_2, yn_1, yn_2
+        xn = sig(t, dt)
+        f = freq(t, dt)
+        q = Q(t, dt)
+        if xn == None or f == None or Q == None:
+            return None
+        w0 = 2 * math.pi * f * dt
+        cw0 = math.cos(w0)
+        sw0 = math.sin(w0)
+        alpha = sw0 / (2 * q)
+        b0 = alpha
+        b1 = 0.0
+        b2 = -b0
+        a0 = 1 + alpha
+        a1 = -2 * cw0
+        a2 = 1 - alpha
+        yn = (b0 * xn + b1 * xn_1 + b2 * xn_2 - a1 * yn_1 - a2 * yn_2) / a0
+        xn_2, xn_1 = xn_1, xn
+        yn_2, yn_1 = yn_1, yn
+        return yn
+    return next
+
+
+def hpf(sig, freq, Q):
+    """
+    Ref https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html
+    """
+    freq = asmodel(freq)
+    Q = asmodel(Q)
+    xn_1 = 0.0
+    xn_2 = 0.0
+    yn_1 = 0.0
+    yn_2 = 0.0
+    def next(t, dt):
+        nonlocal xn_1, xn_2, yn_1, yn_2
+        xn = sig(t, dt)
+        f = freq(t, dt)
+        q = Q(t, dt)
+        if xn == None or f == None or Q == None:
+            return None
+        w0 = 2 * math.pi * f * dt
+        cw0 = math.cos(w0)
+        sw0 = math.sin(w0)
+        alpha = sw0 / (2 * q)
+        b0 = (1+cw0) / 2
+        b1 = -2.0 * b0
+        b2 = b0
+        a0 = 1 + alpha
+        a1 = -2 * cw0
+        a2 = 1 - alpha
+        yn = (b0 * xn + b1 * xn_1 + b2 * xn_2 - a1 * yn_1 - a2 * yn_2) / a0
+        xn_2, xn_1 = xn_1, xn
+        yn_2, yn_1 = yn_1, yn
+        return yn
+    return next
+
+
 def clock(speed = 1.0, t_end = math.inf):
     """
     Useful to provide a variable speed clock that
@@ -651,7 +785,7 @@ def heterodyne(sig, fc, bw):
     sufficiently useful for musical purposes. 
     """
     sigm = sinosc(sig, phasor(fc))
-    baseband = filter2(sigm, bw, 1.0);
+    baseband = lpf(sigm, bw, 5.0);
     return baseband
 
 def vocoder(sig, f0, N, fnew):
