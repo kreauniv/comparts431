@@ -639,4 +639,48 @@ def schedule(clock, segs):
 
     return next
 
+def heterodyne(sig, fc, bw):
+    """
+    A "heterodyne" operation shifts a portion (given bandwidth `bw`) 
+    of the signal around the centre frequency `fc` down to around 0Hz.
+    This in essence makes "whatever is happening around `fc`" to
+    "happen around 0Hz" .. 0Hz region is also referred to as 
+    the "base band".
+
+    Note that this is not a strict heterodyne, but just one that is
+    sufficiently useful for musical purposes. 
+    """
+    sigm = sinosc(sig, phasor(fc))
+    baseband = filter2(sigm, bw, 1.0);
+    return baseband
+
+def vocoder(sig, f0, N, fnew):
+    """
+    Takes `N` frequencies in the audio `sig` that are multiples of `f0` and 
+    moves them over to new frequencies that are multiples 
+    of `fnew`. 
+
+    This demonstrates a basic vocoder. Once you understand what's going on, 
+    you can change the transformation to something else. For example, you 
+    can take harmonic frequencies and move them to be octaves apart (or 
+    any other nonlinear scaling), flip the order of the frequencies, add 
+    duplicates, change amplitudes over time, or make the frequency shift 
+    also time variable, and so on.
+    """
+    asig = aliasable(sig)
+    # Note that since the input audio "process" needs to be used by multiple
+    # heterodyne filters, we need to make it "aliasable" first so that the
+    # same signal can be shared between them all.
+
+    bw = min(20.0, f0 * 0.1, fnew * 0.1)
+    # We choose the heterodyne's LPF bandwidth to be low enough
+    # to accommodate a few cases, where fnew can be lower than f0,
+    # f0 itself is given to be a low value, etc.
+
+    return mix([
+        sinosc(heterodyne(asig, f0 * k, bw), phasor(fnew * k))
+        for k in range(1,N+1)
+        ])
+
+
 
