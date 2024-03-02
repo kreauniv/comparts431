@@ -79,7 +79,7 @@ sequence structure, typically as "arrays" in practically all programming
 languages. So now we have a piece of sound represented as a mapping from an
 "index" to a sample value -- :math:`s[n]`.
 
-In this sampled universe, we the minimum "delay" we can apply is that of one time step
+In this sampled universe, the minimum "delay" we can apply is that of one time step
 and we denote that by :math:`D`. So a sampled sound :math:`s` delayed by one
 time step is written as :math:`Ds` and that means the following --
 
