@@ -57,7 +57,7 @@ write the above echo situation as --
 
 .. math::
 
-    \text{recording} = {1.0 D^{0.0} + 0.25 D^{3.0})s
+    \text{recording} = (1.0 D^{0.0} + 0.25 D^{3.0})s
 
 And now all the information about how the mountain wall transforms the sounds
 uttered from your position is captured in the operator :math:`\text{Echo} = 1.0
