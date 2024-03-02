@@ -386,7 +386,58 @@ Some processes defined in ``synth.py``
 
 See ``synth.py`` code for some other processes.
 
+Loading and playing a sound from a file
+---------------------------------------
 
+The ``synth.py`` module supports playing back a raw audio file. Confusingly
+enough, the music community also refers to a short audio snippet, usually
+capturing a single "atomic" sound intended to be composed with others, also as
+a "sample". In this instance, the meaning is to be taken to be along the lines
+of "grab a sample of a kind of sound so you can reuse it". The context will usually
+disambiguate whether we mean "sample" in this sense, or in the sense of
+"a single number representing sound pressure at a particular point in time".
+
+The format supported by ``synth.py`` is "raw 32-bit floating point" mono audio
+file. To save an Audacity project in this format, select a mono track and
+"File/Export" it, choosing "Uncompressed audio format", where you select
+"raw audio", set the sampling rate to 48000Hz, set the sample format to 
+"32-bit floating point" and save the result to a file -- say "mysound.raw".
+
+Now, you can load up this sound using ``synth.py`` and play it like this --
+
+.. code-block:: python
+
+    audio = read_rawfile("mysound.raw")
+    audio_duration_secs = len(audio) / 48000
+    play(sample(audio), audio_duration_secs)
+
+I hope it is clear to you that you have in your hands a programmatic way
+to do much of the multi-track mixing that a "digital audio workstation"
+can do. For example, if you have four tracks that need to be mixed with
+factors ``[0.25, 0.7, 1.0, 0.5]``, you need to do this --
+
+.. code-block:: python
+
+    files = ["track1.raw", "track2.raw", "track3.raw", "track4.raw"]
+
+    # Load all the files into sample arrays
+    tracks = [read_rawfile(f) for f in files]
+
+    # Make samplers for them
+    samplers = [sample(t) for t in tracks]
+
+    # Construct a mixer for them.
+    amplitudes = [0.25, 0.7, 1.0, 0.5]
+    result = mix([modulate(amplitude[i], samplers[i]) for i in range(len(samplers))])
+
+    # Render the result to a file .. 10 seconds of it.
+    s = render(result, 10.0)
+    write_rawfile(s, "result.raw")
+
+
+
+
+   
 
 
 

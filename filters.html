@@ -1,0 +1,322 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Digital filters &#8212; COMP431/ARTS431: Introduction to computer music v1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Synthesis foundations" href="asynth.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="digital-filters">
+<h1>Digital filters<a class="headerlink" href="#digital-filters" title="Permalink to this heading">¶</a></h1>
+<p>We’ve so far looked at how some kinds of periodic sounds – the sine waves –
+are special, in that we hear them as “pure and uncoloured tones”. Part of the
+reason is that our ear has an amazing mechanism in the inner ear called the
+Cochlea which effectively decomposes sounds into their constituent frequencies.
+We call such a decomposition the “spectrum”.</p>
+<p>Since our ear does this naturally for sounds, it makes sense to process
+sounds by modifying the spectra of sounds directly. Filters accomplish
+this task and they have a very simple structure behind that that we’ll get into
+in this section.</p>
+<div class="admonition-why-bother admonition">
+<p class="admonition-title"><strong>Why bother?</strong></p>
+<p>Filters are used for many purposes to shape the overall tonal quality of a
+sound, to cut off specific unwanted frequencies such as the A/C hum, to
+reduce noise present in quieter parts of the spectrum, to tweak the
+“brightness” of a tone, to highlight certain frequency regions and so on.
+A good part of music production – the process of “mastering” – deals with
+the balance of various parts of the spectrum.</p>
+</div>
+<p>We’ll first look at the simple mathematical structure of filters and then see
+how we can use this knowledge to understand the spectrum.</p>
+<section id="continuous-sounds">
+<h2>Continuous sounds<a class="headerlink" href="#continuous-sounds" title="Permalink to this heading">¶</a></h2>
+<p>If we represent a real sound pressure wave as it hits a microphone’s membrane
+or the human eardrum as a function of time <span class="math notranslate nohighlight">\(s(t)\)</span>, we can construct delayed
+versions of this sound simply as <span class="math notranslate nohighlight">\(s(t-a)\)</span> where <span class="math notranslate nohighlight">\(a\)</span> is the amount
+of delay (when positive) in seconds. So when you’re standing in front of a
+mountain wall and recording yourself as you shout out your name, if you hear
+its echo at a quarter of the original sound’s amplitude after, say, 3 seconds,
+the resultant sound you recorded can be expressed approximately as –</p>
+<div class="math notranslate nohighlight">
+\[\text{recording}(t) = 1.0 * s(t) + 0.25 * s(t - 3.0)\]</div>
+<p>Such a delay has an obvious property that turns out to be very useful –
+that if you delay a sound first by <span class="math notranslate nohighlight">\(a\)</span> seconds and then by <span class="math notranslate nohighlight">\(b\)</span> seconds,
+the end result is effectively a delay by <span class="math notranslate nohighlight">\(a+b\)</span> seconds and therefore
+it doesn’t matter which order you did the two delays. To capture this property,
+we can move away from talking about time explicitly and consider the signals
+<span class="math notranslate nohighlight">\(s\)</span> as a whole and write a “delay of 3.0 seconds” as an operator that
+transforms one signal into another signal (i.e. function) using the following
+notation -</p>
+<div class="math notranslate nohighlight">
+\[s' = D^{3.0}s\]</div>
+<p>…. which then stands for <span class="math notranslate nohighlight">\(s'(t) = s(t - 3.0)\)</span>. Using this notation, we can
+write the above echo situation as –</p>
+<div class="math notranslate nohighlight">
+\[\text{recording} = {1.0 D^{0.0} + 0.25 D^{3.0})s\]</div>
+<p>And now all the information about how the mountain wall transforms the sounds
+uttered from your position is captured in the operator <span class="math notranslate nohighlight">\(\text{Echo} = 1.0
+D^{0.0} + 0.25 D^{3.0}\)</span>. That is because we can now apply this operator to any
+sound to get its echo-y version.</p>
+<p>The notation <span class="math notranslate nohighlight">\(D^a\)</span> is used mostly to be suggestive of the properties of
+exponentiation, where we have <span class="math notranslate nohighlight">\(D^{b}D^{a} = D^{a+b} = D^{a}D^{b}\)</span>. Here,
+we’re writing <span class="math notranslate nohighlight">\(=\)</span> to mean “the operators on the two sides of equality will
+have exactly the same effect on any signal that they’re applied to.”</p>
+</section>
+<section id="sampled-sounds">
+<h2>Sampled sounds<a class="headerlink" href="#sampled-sounds" title="Permalink to this heading">¶</a></h2>
+<p>We’re not working directly with continuous sounds though. We measure the
+pressure at the microphone membrane at regular intervals (called the “sampling
+interval”) and convert each measurement to a number and store the number in a
+sequence structure, typically as “arrays” in practically all programming
+languages. So now we have a piece of sound represented as a mapping from an
+“index” to a sample value – <span class="math notranslate nohighlight">\(s[n]\)</span>.</p>
+<p>In this sampled universe, we the minimum “delay” we can apply is that of one time step
+and we denote that by <span class="math notranslate nohighlight">\(D\)</span>. So a sampled sound <span class="math notranslate nohighlight">\(s\)</span> delayed by one
+time step is written as <span class="math notranslate nohighlight">\(Ds\)</span> and that means the following –</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}h &amp;=&amp; D s \\
+=&gt; h[n] &amp;=&amp; s[n-1]\end{split}\]</div>
+<p>To delay by more than one step, we can simply repeat the application of <span class="math notranslate nohighlight">\(D\)</span>
+like this – <span class="math notranslate nohighlight">\(DDDD s\)</span>, which we can abbreviate as <span class="math notranslate nohighlight">\(D^4 s\)</span>.</p>
+<p>So similar to what we did for continuous sounds above, we can write an implementation
+of our “3 second echo” like this –</p>
+<div class="math notranslate nohighlight">
+\[h = (1.0 D^0 + 0.25 D^{3\times 48000})s\]</div>
+</section>
+<section id="impulse-response">
+<h2>Impulse response<a class="headerlink" href="#impulse-response" title="Permalink to this heading">¶</a></h2>
+<p>There is a very simple sound that can help us see what these <span class="math notranslate nohighlight">\(D\)</span> expressions mean.
+This is the “delta function” defined by –</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\delta[n] &amp;=&amp; 1 &amp; \text{ for } n = 0 \\
+&amp;=&amp; 0 &amp; \text{ for all other } n\end{split}\]</div>
+<p>So what does a delayed value of <span class="math notranslate nohighlight">\(\delta\)</span> look like? A <span class="math notranslate nohighlight">\(\delta\)</span> that is delayed
+by, say, 5 time steps is simply <span class="math notranslate nohighlight">\(\delta[n-5]\)</span>, which is <span class="math notranslate nohighlight">\(1\)</span> when <span class="math notranslate nohighlight">\(n = 5\)</span>
+and <span class="math notranslate nohighlight">\(0\)</span> for other values of n. Therefore if you have a sound whose samples are given
+by <span class="math notranslate nohighlight">\(s_n\)</span> for time step <span class="math notranslate nohighlight">\(n\)</span>, we can write it equivalently as –</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}&amp; &amp; s_0 D^0\delta + s_1 D^1\delta + s_2 D^2\delta + s_3 D^3\delta + ... \\
+&amp; = &amp; (s_0D^0 + s_1D^1 + s_2D^2 + s_3D^3 + ...)\delta\end{split}\]</div>
+<p>So such an “echo-y filter” can be characterized by what the filter does to the
+<span class="math notranslate nohighlight">\(\delta\)</span> sound – which is essentially a sharp “click”. This is why you can
+make a click sound in a hall, record the result and use that to transform any
+recording to sound as though it were performed in the hall!</p>
+<p>This response of a filter to the <span class="math notranslate nohighlight">\(\delta\)</span> or “click” signal is called its
+“impulse response”.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Such “impulses” are common in music making, apart from the
+“whimsical” interpretation of “impulse”. When you press a key on a piano, a
+hammer strikes a taut string to produce its natural and sustained vibration
+which is a tone. In this case, the impulse response of such a taut string is
+a continuous and decaying tone. On a Marimba though, this tone is short
+lived when a tone bar is struck by the mallet. A prayer gong when struck by
+a hammer resonates in a number of anharmonic frequencies that give a bell
+its characteristic sound. The sound also changes depending on whether you
+strike the bell with a hard metal stick, or a wooden stick or a soft padded
+mallet. These correspond to slightly different and “smushed out” forms of
+“impulse”. Tapping the taut skin on the surface of a Mrdangam or Tabla is
+also an impulse and depending on how the finger makes contact with the drum
+skin, you can elicit different tonal qualities from the instrument, thus
+giving us musical expressive control over the instrument. All “percussive”
+instruments are activated by some form of “impulse”.</p>
+</div>
+</section>
+<section id="combining-filters">
+<h2>Combining filters<a class="headerlink" href="#combining-filters" title="Permalink to this heading">¶</a></h2>
+<p>Supposing you apply two filters in sequence, is there an “effective filter”
+that is the same as the combination? Yes indeed and it is nearly trivial to see
+how this might be so. For example, consider the two filters –</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{rcl}
+g &amp; = &amp; g_0 D^0 + g_1 D^1 + g_2 D^2 \\
+h &amp; = &amp; h_0 D^0 + h_1 D^1 + h_2 D^2 + h_3 D^3
+\end{array}\end{split}\]</div>
+<p>If you apply <span class="math notranslate nohighlight">\(g\)</span> to <span class="math notranslate nohighlight">\(\delta\)</span> first and then <span class="math notranslate nohighlight">\(h\)</span> to the result
+of that, that we effectively have is the following –</p>
+<div class="math notranslate nohighlight">
+\[h g \delta = (h_0 D^0 + h_1 D^1 + h_2 D^2 + h_3 D^3)(g_0 D^0 + g_1 D^1 + g_2 D^2)\delta\]</div>
+<p>To work out the equivalent filter, we simply have to “multiply out” the <span class="math notranslate nohighlight">\(D\)</span>
+polynomials to get the following –</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{rcl}
+h g &amp; = &amp; h_0g_0 D^0 \\
+    &amp;   &amp; + (h_0g_1 + h_1g_0)D^1 \\
+    &amp;   &amp; + (h_0g_2 + h_1g_1 + h_2g_0)D^2 \\
+    &amp;   &amp; + (h_1g_2 + h_2g_1 + h_3g_0)D^3 \\
+    &amp;   &amp; + (h_2g_2 + h_3g_1)D^4 \\
+    &amp;   &amp; + h_3g_2 D^5
+\end{array}\end{split}\]</div>
+<p>In the above result, note that the indices of the <span class="math notranslate nohighlight">\(h\)</span> and <span class="math notranslate nohighlight">\(g\)</span> terms for each of <span class="math notranslate nohighlight">\(D^k\)</span>
+add up to the <span class="math notranslate nohighlight">\(k\)</span>. This is all there is to “convolution” – i.e. –</p>
+<ol class="arabic simple">
+<li><p>You write out the <span class="math notranslate nohighlight">\(D\)</span> polynomials for each filter you’re applying in sequence.</p></li>
+<li><p>Multiply out the polynomials to get the resultant filter.</p></li>
+</ol>
+<p>So in the above case, we say that the “convolution of <span class="math notranslate nohighlight">\(g\)</span> and <span class="math notranslate nohighlight">\(h\)</span> sequences” is
+the sequence <span class="math notranslate nohighlight">\([h_0g_0, h_0g_1 + h_1g_0, h_0g_2 + h_1g_1 + h_2g_0, h_1g_2 + h_2g_1 + h_3g_0, h_2g_2 + h_3g_1, h_3g_2]\)</span>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>See that it didn’t matter whether we applied <span class="math notranslate nohighlight">\(g\)</span> first followed by <span class="math notranslate nohighlight">\(h\)</span>
+or <span class="math notranslate nohighlight">\(h\)</span> first followed by <span class="math notranslate nohighlight">\(g\)</span>, we’ll end up with the same result polynomial in
+both the cases. Such filters have two important properties –</p>
+<ol class="arabic simple">
+<li><dl class="simple">
+<dt><strong>Linearity</strong>: The filtered version of the sum of two sounds is the same</dt><dd><p>as the sum of the filtered version of the individual sounds being
+added.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Time invariance</strong>: This means it doesn’t matter if you apply a filter after delaying</dt><dd><p>a sound by some amount or apply the filter first and then apply the same amount of
+delay. You’ll get the same result in both cases.</p>
+</dd>
+</dl>
+</li>
+</ol>
+<p>So the filters we’ve been discussing are, for the above reasons, called
+“linear, time invariant filters”.</p>
+</div>
+</section>
+<section id="relationship-with-the-spectrum">
+<h2>Relationship with the spectrum<a class="headerlink" href="#relationship-with-the-spectrum" title="Permalink to this heading">¶</a></h2>
+<p>When we discussed the spectra of sounds, we said things like “if you apply a low
+pass filter followed by a high pass filter, you get a kind of band pass filter”,
+as though we were multiplying the spectral shape by some kind of a curve. We didn’t
+really justify this at that point.</p>
+<p>The reason the above way of talking about filters is justified is due to the property
+of convolution whereby –</p>
+<ol class="arabic simple">
+<li><p>Convolution of the impulse responses of two filters is equivalent to multiplying their
+spectra, and</p></li>
+<li><p>Multiplication of two sounds or impulse responses time step by time is equivalent to
+the convolution of their spectra. (This is what we saw when we were looking at the
+frequency components of modulated sine tones.)</p></li>
+</ol>
+<p>We can compute the spectrum of a sound or a filter using the “Fourier transform”, or
+as is more common for efficiency reasons, the “Fast Fourier Transform”. This is
+what we saw in the video recording on <a class="reference external" href="_fcs">filters, convolution and spectra</a>.</p>
+<p>For our purpose, we don’t need to get into the details of the calculation of the
+Fourier transform, though I’ll at some point give you pointers you can follow
+if you’re interested in knowing about it.</p>
+<p>For our purposes, it is enough to understand that when you apply filters one after
+the other, the spectrum gets shaped multiplicatively. Some consequences of this are –</p>
+<ol class="arabic simple">
+<li><p>If one of the filters completely eliminates a specific frequency, it cannot be
+recovered by applying another filter afterwards, or before that filter is applied!</p></li>
+<li><p>The spectrum of <span class="math notranslate nohighlight">\(\delta\)</span> has the same value for all frequencies! So convolving
+a sound with <span class="math notranslate nohighlight">\(\delta\)</span> will not alter it any way, much as multiplying all
+spectral components by <span class="math notranslate nohighlight">\(1.0\)</span> won’t change the sound in any way.</p></li>
+<li><p>If you know that you do not have any sound in some parts of the spectrum
+but some noise has been mixed in overall, you can suppress noise in those
+parts of the spectrum using an appropriate filter.</p></li>
+</ol>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">COMP431/ARTS431: Introduction to computer music</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="math.html">Mathematical preliminaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="asynth.html">Synthesis foundations</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Digital filters</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#continuous-sounds">Continuous sounds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sampled-sounds">Sampled sounds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#impulse-response">Impulse response</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#combining-filters">Combining filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#relationship-with-the-spectrum">Relationship with the spectrum</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="asynth.html" title="previous chapter">Synthesis foundations</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024, Srikumar K. S..
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/filters.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
