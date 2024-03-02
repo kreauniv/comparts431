@@ -12,6 +12,7 @@ Welcome to COMP431/ARTS431: Introduction to computer music
 
    math
    asynth
+   filters
 
 Indices and tables
 ==================
