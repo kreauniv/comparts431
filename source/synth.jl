@@ -72,6 +72,10 @@ midi2hz(m) = 440.0 * (2 ^ ((m - 69.0)/12.0))
 "Converts a frequency in Hz to its MIDI note number in the equal tempered tuning."
 hz2midi(hz) = 69.0 + 12.0*log(hz/440.0)/log(2.0)
 
+"We define done and value for Nothing type as a signal trivially."
+done(s :: Nothing, t, dt) = true
+value(s :: Nothing, t, dt) = 0.0f0
+
 """
     mutable struct Aliasable{S <: Signal} <: Signal
 
@@ -1115,5 +1119,85 @@ function vocoder(sig, f0, N, fnew)
     reduce(+, sinosc(heterodyne(asig, f0 * k, bw), phasor(fnew * k)) for k in 1:N)
 end
 
+"""
+Can be used to hide an underlying signal via dynamic dispatch.
+"""
+struct Gen
+    done :: Function
+    value :: Function
+end
 
+done(g :: Gen, t, dt) = d.done(t, dt)
+value(g :: Gen, t, dt) = d.value(t, dt)
+function Gen(s :: S) where {S <: Signal}
+    gdone(t, dt) = done(s, t, dt)
+    gvalue(t, dt) = value(s, t, dt)
+    return Gen(gdone, gvalue)
+end
+
+function dyn(fn)
+    voices = []
+    next_t = 0.0
+    ended = false
+
+    function done(t, dt)
+        if ended return true end
+        if t >= next_t
+            next_t, nextvoices = fn(t, dt)
+            if next_t < t && length(nextvoices) == 0
+                ended = true
+                return true
+            else
+                append!(voices, nextvoices)
+            end
+        end
+        return false
+    end
+
+    function value(t, dt)
+
+
+    end
+end
+
+
+mutable struct Feedback
+    s
+    last_t :: Float64
+    calculating_t :: Float64
+    last_val :: Float32
+    last_done :: Bool
+end
+
+feedback() = Feedback(nothing, 0.0, 0.0, 0.0f0, false)
+
+function connect(s :: S, fb :: Feedback) where {S <: Signal}
+    fb.s = s
+end
+
+function done(fb :: Feedback, t, dt)
+    if t <= fb.calculating_t
+        return fb.last_done
+    end
+    out_done = fb.last_done
+    if t > fb.last_t
+        fb.calculating_t = t
+        fb.last_done = done(fb.s, t, dt)
+        fb.last_t = t
+    end
+    return out_done
+end
+
+function value(fb :: Feedback, t, dt)
+    if t <= fb.calculating_t
+        return fb.last_val
+    end
+    out_val = fb.last_val
+    if t > fb.last_t
+        fb.calculating_t = t
+        fb.last_val = value(fb.s, t, dt)
+        fb.last_t = t
+    end
+    return out_val
+end
 

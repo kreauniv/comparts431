@@ -816,5 +816,43 @@ def vocoder(sig, f0, N, fnew):
         for k in range(1,N+1)
         ])
 
+def feedback():
+    """
+    A feedback signal is expected to be used when constructing feedback loops
+    to avoid infinite loop computations. When you make a delay(), you
+    get two functions output -- the usual signal function `next`
+    and the other is a `setsig` function that you can set later on
+    to another signal, which might in turn invoke the delay's `next`
+    in a loop. The implementation of `delay` will prevent an infinite
+    loop from happening in such cases. A feedback signal is also aliasable.
+
+    # Example: A signal used to modulate its own frequency
+    f, fconnect = feedback()
+    sig1 = sinosc(0.5, phasor(mix([300.0, f]))
+    sig2 = modulate(30.0, sig1)
+    fconnect(sig2)
+    result = sig1
+    """
+    s = None
+    lastval = 0.0
+    last_t = 0.0
+    calculating_t = 0.0
+    def next(t, dt):
+        nonlocal lastval, s
+        outv = lastval
+        if t <= calculating_t:
+            # Bypass calculating using s.
+            # Otherwise we'll end up in infinite loops.
+            return lastval
+        if t > last_t:
+            calculating_t = last_t = t
+            lastval = s(t, dt)
+        return outv
+    def connect(loopsig):
+        nonlocal s
+        s = loopsig
+        return next
+    return next, connect
+
 
 
