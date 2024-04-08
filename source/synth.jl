@@ -375,6 +375,7 @@ mutable struct Sample <: Signal
     i :: Int
     looping :: Bool
     loop_i :: Int
+    samplingrate :: Float32
 end
 
 """
@@ -388,8 +389,8 @@ but can be asked to loop back to a specified point after that.
   of the samples vector. So if you want to jump back to the middle, you give
   `0.5` as the `loopto` value.
 """
-function sample(samples :: Vector{Float32}; looping = false, loopto = 1.0) 
-    Sample(samples, length(samples), 0, looping, 1 + floor(Int, loopto * length(samples)))
+function sample(samples :: Vector{Float32}; looping = false, loopto = 1.0, samplingrate=48000.0f0) 
+    Sample(samples, length(samples), 0, looping, 1 + floor(Int, loopto * length(samples)), samplingrate)
 end
 
 function done(s :: Sample, t, dt)
@@ -730,7 +731,7 @@ function write(filename :: AbstractString, model::Sig, duration_secs :: Abstract
     s = render(model, duration_secs; sr, maxamp)
     s = rescale(maxamp, s)
     open(filename, "w") do f
-        write(f, s)
+        Base.write(f, s)
     end
 end
 
@@ -1200,4 +1201,160 @@ function value(fb :: Feedback, t, dt)
     end
     return out_val
 end
+
+
+"""
+An internal structure used to keep track of a single
+granular "voice".
+
+- `rt` is the time within the grain. 0.0 is the start of the grain.
+- `gt` is the grain start time within the larger sample array.
+- `dur` is the grain duration in seconds
+- `overlap` is a fraction in the range [0.0, 0.5].
+"""
+mutable struct Grain
+    rt  
+    gt
+    dur
+    overlap
+end
+
+"""
+Represents a granulation of a sample array.
+
+The grain durations, overlaps and playback speed can be varied
+with time as signals. Additionally, the `grainplayphasor` is 
+expected to be a phasor that will trigger a new grain voice
+upon its negative edge.
+"""
+mutable struct Granulation{Dur <: Signal, Overlap <: Signal, Speed <: Signal, GTime <: Signal, GPlay <: Signal} <: Signal
+    samples :: Vector{Float32}
+    samplingrate :: Float32
+    dur :: Dur
+    overlap :: Overlap
+    speed :: Speed
+    graintime :: GTime
+    grainplayphasor :: GPlay
+    lastgrainplayphasor :: Float32
+    grains :: Vector{Grain}
+end
+
+function granulate(samples, dur :: Real, overlap :: Real, speed :: Real, graintime,
+        player = phasor(1.0 * speed / (dur * (1.0 - overlap)))
+        ; samplingrate=48000.0f0)
+    Granulation(samples, samplingrate, konst(dur), konst(overlap), konst(speed), graintime, player, 0.0f0, Vector{Grain}())
+end
+
+function granulate(samples, dur, overlap, speed, graintime, player; samplingrate=48000.0f0)
+    return Granulation(samples, samplingrate, dur, overlap, speed, graintime, player, 0.0f0, Vector{Grain}())
+end
+
+function isgrainplaying(gr :: Grain)
+    abs(gr.rt) < gr.dur
+end
+
+function done(g :: Granulation, t, dt)
+    false
+end
+
+function value(g :: Granulation, t, dt)
+    # Cleanup dead voices
+    while length(g.grains) > 0
+        if !isgrainplaying(g.grains[1])
+            popfirst!(g.grains)
+        else
+            break
+        end
+    end
+
+    # Calculate input signal values
+    dur = value(g.dur, t, dt)
+    overlap = value(g.overlap, t, dt)
+    speed = value(g.speed, t, dt)
+    gt = value(g.graintime, t, dt)
+
+    # Check whether we need to start a new voice.
+    lastgpt = g.lastgrainplayphasor
+    gpt = value(g.grainplayphasor, t, dt)
+    g.lastgrainplayphasor = gpt
+    if gpt - lastgpt < -0.5
+        push!(g.grains, Grain(0.0, gt, dur, overlap))
+    end
+
+    # Sum all voices.
+    s = 0.0
+
+    for i in eachindex(g.grains)
+        gr = g.grains[i]
+        s += playgrain(g.samples, g.samplingrate, gr, speed, t, dt)
+        #println(gr, "\t", s)
+    end
+
+    #println("s = ", s)
+    return s
+end
+
+"""
+Computes the sample value of the given grain at the given time and speed.
+The speed of playback of all the grains is a single shared signal to ensure
+coherency. The playgrain function will also update the internal clock of the
+Grain to point to the next grain sample value to pick.
+"""
+function playgrain(s :: Vector{Float32}, samplingrate, gr :: Grain, speed :: Real, t, dt)
+    rt, gt, dur, overlap = (gr.rt, gr.gt, gr.dur, gr.overlap)
+    st = mod(rt, dur) + gt
+    a = raisedcos(abs(rt) / dur, overlap)
+    sti = st * samplingrate
+    i = floor(Int, sti)
+    f = sti - i
+    s = g.samples
+    i = max(1, min(i, length(s)-3))
+    gr.rt += speed / samplingrate 
+    result = a * interp4(f, s[i], s[i+1], s[i+2], s[i+3])
+    #println(i, "\t", f, "\t", gr.rt, "\t", speed, "\t", result)
+    return result
+end
+
+"""
+Four point interpolation.
+
+- `x` is expected to be in the range `[0,1]`.
+
+This is a cubic function of `x` such that -
+
+- f(-1) = x1
+- f(0) = x2
+- f(1) = x3
+- f(2) = x4
+"""
+function interp4(x, x1, x2, x3, x4)
+    a = x2
+    b = (x3 - 3x2 + 2x1)/6
+    c = (x1 - x2)/2
+    d = - (b + c)
+    return a + x * (b + x * (c + d * x))
+end
+
+
+"""
+A "raised cosine" curve has a rising part that is shaped like cos(x-π/2)+1
+and a symmetrically shaped falling part. If the `overlap` is 0.5, then
+there is no intervening portion between the rising and falling parts
+(`x` is in the range `[0,1]`). For `overlap` values less than 0.5,
+the portion between the rising and falling parts will be clamped to 1.0.
+
+For example, `raisedcos(x, 0.25)` will give you a curve that will smoothly
+rise from 0.0 at x=0.0 to 1.0 at x=0.25, stay fixed at 1.0 until x = 0.75
+and smoothly decrease to 0.0 at x=1.0.
+"""
+function raisedcos(x, overlap)
+    if x < overlap
+        return 0.5f0 * (cos(Float32(2 * π * (x/overlap - 0.25))) + 1.0f0)
+    elseif x > 1.0f0 - overlap
+        return 0.5f0 * (cos(Float32(2 * π * ((1.0 - x)/overlap - 0.25))) + 1.0f0)
+    else
+        return 1.0f0
+    end
+end
+
 
