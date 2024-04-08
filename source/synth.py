@@ -838,7 +838,7 @@ def feedback():
     last_t = 0.0
     calculating_t = 0.0
     def next(t, dt):
-        nonlocal lastval, s
+        nonlocal s, last_t, lastval, calculating_t
         outv = lastval
         if t <= calculating_t:
             # Bypass calculating using s.
