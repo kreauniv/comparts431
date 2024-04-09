@@ -76,6 +76,31 @@ hz2midi(hz) = 69.0 + 12.0*log(hz/440.0)/log(2.0)
 done(s :: Nothing, t, dt) = true
 value(s :: Nothing, t, dt) = 0.0f0
 
+
+"""
+A simple wrapper struct for cyclic access to vectors.
+These don't have the concept of "length" and the index
+can range from -inf to +inf (i.e. over all integers).
+Note that the circular range is restricted to what
+was at creation time. This means you can use views
+as well.
+"""
+struct Circular{T, V <: AbstractArray{T}}
+    vec :: V
+    N :: Int
+end
+
+function Base.getindex(c :: Circular{T,V}, i) where {T, V <: AbstractArray{T}}
+    return c.vec[mod1(i, c.N)]
+end
+
+function Base.setindex!(c :: Circular{T,V}, i, val :: T) where {T, V <: AbstractArray{T}}
+    c.vec[mod1(i, c.N)] = val
+end
+
+circular(v :: AbstractArray) = Circular(v, length(v))
+
+
 """
     mutable struct Aliasable{S <: Signal} <: Signal
 
@@ -424,11 +449,14 @@ done(s :: Wavetable, t, dt) = false
 
 function value(s :: Wavetable, t, dt)
     p = value(s.phase, t, dt)
-    pos = p * s.N
+    pos = 1 + p * s.N
     i = floor(Int, pos)
-    j = mod(1+i, s.N)
     frac = pos - i
-    s.table[i] + frac * (s.table[j] - s.table[i])
+    interp4(frac, 
+            s.table[mod1(i,s.N)],
+            s.table[mod1(i+1,s.N)],
+            s.table[mod1(i+2,s.N)],
+            s.table[mod1(i+3,s.N)])
 end
 
 """
@@ -438,6 +466,7 @@ A simple wavetable synth that samples the given table using the given phasor
 and scales the table by the given amplitude modulator.
 """
 function wavetable(table :: Vector{Float32}, amp :: Amp, phase :: Ph) where {Amp <: Signal, Ph <: Signal}
+    @assert length(table) >= 4
     Wavetable(table, length(table), amp, phase)
 end
 
@@ -1257,61 +1286,73 @@ function done(g :: Granulation, t, dt)
     false
 end
 
-function value(g :: Granulation, t, dt)
-    # Cleanup dead voices
-    while length(g.grains) > 0
-        if !isgrainplaying(g.grains[1])
-            popfirst!(g.grains)
+function cleanupdeadvoices!(voices)
+    lastdeadvoice = 0
+    for voice in voices
+        if !isgrainplaying(voice)
+            lastdeadvoice += 1
         else
             break
         end
     end
+    deleteat!(voices, 1:lastdeadvoice)
+end
+
+function value(g :: Granulation, t, dt)
+    cleanupdeadvoices!(g.grains)
 
     # Calculate input signal values
-    dur = value(g.dur, t, dt)
+    dur     = value(g.dur, t, dt)
     overlap = value(g.overlap, t, dt)
-    speed = value(g.speed, t, dt)
-    gt = value(g.graintime, t, dt)
+    speed   = value(g.speed, t, dt)
+    gt      = value(g.graintime, t, dt)
 
     # Check whether we need to start a new voice.
     lastgpt = g.lastgrainplayphasor
     gpt = value(g.grainplayphasor, t, dt)
     g.lastgrainplayphasor = gpt
     if gpt - lastgpt < -0.5
+        # Trigger new voice for grain
         push!(g.grains, Grain(0.0, gt, dur, overlap))
     end
 
-    # Sum all voices.
+    # Sum all playing grains
     s = 0.0
-
-    for i in eachindex(g.grains)
-        gr = g.grains[i]
+    tstep = speed / g.samplingrate
+    for gr in g.grains
         s += playgrain(g.samples, g.samplingrate, gr, speed, t, dt)
-        #println(gr, "\t", s)
+        # Update the grain's clock.
+        gr.rt += tstep
     end
 
-    #println("s = ", s)
     return s
 end
 
 """
 Computes the sample value of the given grain at the given time and speed.
 The speed of playback of all the grains is a single shared signal to ensure
-coherency. The playgrain function will also update the internal clock of the
-Grain to point to the next grain sample value to pick.
+coherency. 
 """
 function playgrain(s :: Vector{Float32}, samplingrate, gr :: Grain, speed :: Real, t, dt)
     rt, gt, dur, overlap = (gr.rt, gr.gt, gr.dur, gr.overlap)
+
+    # Account for forward as well as reverse playback. `rt` could become negative
+    # if a negative value of speed was given.
     st = mod(rt, dur) + gt
-    a = raisedcos(abs(rt) / dur, overlap)
-    sti = st * samplingrate
+
+    # `sti` is "sample time index". Limit it to a usable range.
+    # `i` is its integer part and `f` its fractional part.
+    sti = max(1, min(st * samplingrate, length(s)-3))
     i = floor(Int, sti)
     f = sti - i
-    s = g.samples
-    i = max(1, min(i, length(s)-3))
-    gr.rt += speed / samplingrate 
+
+    # Compute the amplitude envelope. The raisedcos is symmetric,
+    # so we can just use abs(rt) without worrying about wrap around.
+    a = raisedcos(abs(rt) / dur, overlap)
+
+    # Do four point interpolation. Useful when going very slow.
     result = a * interp4(f, s[i], s[i+1], s[i+2], s[i+3])
-    #println(i, "\t", f, "\t", gr.rt, "\t", speed, "\t", result)
+
     return result
 end
 
