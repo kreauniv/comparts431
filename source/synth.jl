@@ -1280,7 +1280,7 @@ end
 
 function chorusgrains(rng, N=1, spread=5.0f0)
     function grain(rng, time, speedfactor)
-        Grain(0.05 * rand(rng), 0.0, time, 0.1 / speedfactor, 0.03, speedfactor)
+        Grain(0.05 * rand(rng), 0.0, time, 0.1, 0.03, speedfactor)
     end
 
     function granulator(time)
@@ -1295,6 +1295,16 @@ function granulate(samples, dur :: Real, overlap :: Real, speed :: Real, grainti
     Granulation(samples, samplingrate, simplegrains(dur, overlap, 1.0f0), konst(speed), graintime, player, 0.0f0, Vector{Grain}())
 end
 
+"""
+Example:
+    snd = read_rawaudio("/tmp/somefile.raw")
+    stop = play(0.5 * granulate(snd, 
+                             chorusgrains(rng,3,4.0),
+                             konst(0.5),
+                             line(0.0, 10.0, 3.2),
+                             phasor(20.0)),
+             10.0)
+"""
 function granulate(samples, granulator, speed, graintime, player; samplingrate=48000.0f0)
     return Granulation(samples, samplingrate, granulator, speed, graintime, player, 0.0f0, Vector{Grain}())
 end
