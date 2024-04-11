@@ -1278,9 +1278,9 @@ function simplegrains(dur :: Real, overlap :: Real, speedfactor :: Real)
     return granulator
 end
 
-function chorusgrains(rng, N=1, spread=5.0f0)
+function chorusgrains(rng, delayspread=0.0, N=1, spread=5.0f0)
     function grain(rng, time, speedfactor)
-        Grain(0.05 * rand(rng), 0.0, time, 0.1, 0.03, speedfactor)
+        Grain(delayspread * rand(rng), 0.0, time, 0.1, 0.03, speedfactor)
     end
 
     function granulator(time)
@@ -1299,7 +1299,7 @@ end
 Example:
     snd = read_rawaudio("/tmp/somefile.raw")
     stop = play(0.5 * granulate(snd, 
-                             chorusgrains(rng,3,4.0),
+                             chorusgrains(rng,0.0,3,4.0),
                              konst(0.5),
                              line(0.0, 10.0, 3.2),
                              phasor(20.0)),
@@ -1349,9 +1349,9 @@ function value(g :: Granulation, t, dt)
     s = 0.0
     tstep = speed / g.samplingrate
     for gr in g.grains
-        s += playgrain(g.samples, g.samplingrate, gr, speed * gr.speedfactor, t, dt)
+        s += playgrain(g.samples, g.samplingrate, gr, t, dt)
         # Update the grain's clock.
-        gr.rt += tstep
+        gr.rt += tstep * gr.speedfactor
         gr.delay -= dt
     end
 
@@ -1363,7 +1363,7 @@ Computes the sample value of the given grain at the given time and speed.
 The speed of playback of all the grains is a single shared signal to ensure
 coherency. 
 """
-function playgrain(s :: Vector{Float32}, samplingrate, gr :: Grain, speed :: Real, t, dt)
+function playgrain(s :: Vector{Float32}, samplingrate, gr :: Grain, t, dt)
     if gr.delay > 0.0 
         return 0.0f0
     end
