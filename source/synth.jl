@@ -1244,10 +1244,12 @@ granular "voice".
    is dependent on both dur and overlap.
 """
 mutable struct Grain
-    rt  
-    gt
-    dur
-    overlap
+    delay :: Float64
+    rt :: Float64
+    gt :: Float64
+    dur :: Float32
+    overlap :: Float32
+    speedfactor :: Float32
 end
 
 """
@@ -1258,11 +1260,10 @@ with time as signals. Additionally, the `grainplayphasor` is
 expected to be a phasor that will trigger a new grain voice
 upon its negative edge.
 """
-mutable struct Granulation{Dur <: Signal, Overlap <: Signal, Speed <: Signal, GTime <: Signal, GPlay <: Signal} <: Signal
+mutable struct Granulation{Speed <: Signal, GTime <: Signal, GPlay <: Signal} <: Signal
     samples :: Vector{Float32}
     samplingrate :: Float32
-    dur :: Dur
-    overlap :: Overlap
+    granulator
     speed :: Speed
     graintime :: GTime
     grainplayphasor :: GPlay
@@ -1270,18 +1271,36 @@ mutable struct Granulation{Dur <: Signal, Overlap <: Signal, Speed <: Signal, GT
     grains :: Vector{Grain}
 end
 
+function simplegrains(dur :: Real, overlap :: Real, speedfactor :: Real)
+    function granulator(time)
+        [Grain(0.0, 0.0, time, dur, overlap, speedfactor)]
+    end
+    return granulator
+end
+
+function chorusgrains(rng, N=1, spread=5.0f0)
+    function grain(rng, time, speedfactor)
+        Grain(0.05 * rand(rng), 0.0, time, 0.1 / speedfactor, 0.03, speedfactor)
+    end
+
+    function granulator(time)
+        [grain(rng, time, 2.0 ^ (- spread * (i-1) / 12)) for i in 1:N]
+    end
+    return granulator
+end
+
 function granulate(samples, dur :: Real, overlap :: Real, speed :: Real, graintime,
         player = phasor(1.0 * speed / (dur * (1.0 - overlap)))
         ; samplingrate=48000.0f0)
-    Granulation(samples, samplingrate, konst(dur), konst(overlap), konst(speed), graintime, player, 0.0f0, Vector{Grain}())
+    Granulation(samples, samplingrate, simplegrains(dur, overlap, 1.0f0), konst(speed), graintime, player, 0.0f0, Vector{Grain}())
 end
 
-function granulate(samples, dur, overlap, speed, graintime, player; samplingrate=48000.0f0)
-    return Granulation(samples, samplingrate, dur, overlap, speed, graintime, player, 0.0f0, Vector{Grain}())
+function granulate(samples, granulator, speed, graintime, player; samplingrate=48000.0f0)
+    return Granulation(samples, samplingrate, granulator, speed, graintime, player, 0.0f0, Vector{Grain}())
 end
 
 function isgrainplaying(gr :: Grain)
-    abs(gr.rt) < gr.dur
+    gr.delay > 0.0 || (abs(gr.rt) < gr.dur + gr.overlap * 2)
 end
 
 function done(g :: Granulation, t, dt)
@@ -1304,10 +1323,8 @@ function value(g :: Granulation, t, dt)
     cleanupdeadvoices!(g.grains)
 
     # Calculate input signal values
-    dur     = value(g.dur, t, dt)
-    overlap = value(g.overlap, t, dt)
-    speed   = value(g.speed, t, dt)
-    gt      = value(g.graintime, t, dt)
+    gt = value(g.graintime, t, dt)
+    speed = value(g.speed, t, dt)
 
     # Check whether we need to start a new voice.
     lastgpt = g.lastgrainplayphasor
@@ -1315,16 +1332,17 @@ function value(g :: Granulation, t, dt)
     g.lastgrainplayphasor = gpt
     if gpt - lastgpt < -0.5
         # Trigger new voice for grain
-        push!(g.grains, Grain(0.0, gt, dur, overlap))
+        append!(g.grains, g.granulator(gt))
     end
 
     # Sum all playing grains
     s = 0.0
     tstep = speed / g.samplingrate
     for gr in g.grains
-        s += playgrain(g.samples, g.samplingrate, gr, speed, t, dt)
+        s += playgrain(g.samples, g.samplingrate, gr, speed * gr.speedfactor, t, dt)
         # Update the grain's clock.
         gr.rt += tstep
+        gr.delay -= dt
     end
 
     return s
@@ -1336,6 +1354,9 @@ The speed of playback of all the grains is a single shared signal to ensure
 coherency. 
 """
 function playgrain(s :: Vector{Float32}, samplingrate, gr :: Grain, speed :: Real, t, dt)
+    if gr.delay > 0.0 
+        return 0.0f0
+    end
     rt, gt, dur, overlap = (gr.rt, gr.gt, gr.dur, gr.overlap)
     fulldur = dur + 2*overlap
 
