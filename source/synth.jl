@@ -33,7 +33,7 @@ available to combine signals and numbers.
 - `phasor(frequency, initial_phase)`
 - `sinosc(amplitude, phasor)`
 - `+`, `-`, `*`
-- `linterp(v1, duration_secs, v2)`
+- `line(v1, duration_secs, v2)`
 - `expinterp(v1, duration_secs, v2)`
 - `expdecay(rate)`
 - `adsr(alevel, asecs, dsecs, suslevel, sussecs, relses)`
@@ -245,31 +245,31 @@ end
 (Base.:-)(s1 :: S1, s2 :: Real) where {S1 <: Signal} = Mix(1.0f0, s1, -1.0f0, konst(s2))
 (Base.:-)(s1 :: S1, s2 :: S2) where {S1 <: Signal, S2 <: Signal} = Mix(1.0f0, s1, -1.0f0, s2)
 
-mutable struct Linterp <: Signal
+mutable struct Line <: Signal
     v1 :: Float32
     duration_secs :: Float32
     v2 :: Float32
 end
 
-done(s :: Linterp, t, dt) = false
-function value(s :: Linterp, t, dt)
+done(s :: Line, t, dt) = false
+function value(s :: Line, t, dt)
     if t <= 0.0f0 
         s.v1
     elseif t <= s.duration_secs
-        (s.v1 + (s.v2 - s.v1) * t / duration_secs)
+        (s.v1 + (s.v2 - s.v1) * t / s.duration_secs)
     else 
         s.v2
     end
 end
 
 """
-    linterp(v1 :: Real, duration_secs :: Real, v2 :: Real)
+    line(v1 :: Real, duration_secs :: Real, v2 :: Real)
 
 Makes a signal that produces `v1` for `t < 0.0` and `v2` for `t > duration_secs`.
 In between the two times, it produces a linearly varying value between
 `v1` and `v2`.
 """
-linterp(v1 :: Real, duration_secs :: Real, v2 :: Real) = Linterp(Float32(v1), Float32(duration_secs), Float32(v2))
+line(v1 :: Real, duration_secs :: Real, v2 :: Real) = Line(Float32(v1), Float32(duration_secs), Float32(v2))
 
 mutable struct Expinterp <: Signal
     v1 :: Float32
@@ -283,7 +283,7 @@ end
 """
     expinterp(v1 :: Real, duration_secs :: Real, v2 :: Real)
 
-Similar to linterp, but does exponential interpolation from `v1` to `v2`
+Similar to line, but does exponential interpolation from `v1` to `v2`
 over `duration_secs`. Note that both values must be `> 0.0` for this
 to be valid.
 """
@@ -1240,7 +1240,8 @@ granular "voice".
 - `rt` is the time within the grain. 0.0 is the start of the grain.
 - `gt` is the grain start time within the larger sample array.
 - `dur` is the grain duration in seconds
-- `overlap` is a fraction in the range [0.0, 0.5].
+- `overlap` is also a duration in seconds. The total duration of the grain
+   is dependent on both dur and overlap.
 """
 mutable struct Grain
     rt  
@@ -1336,10 +1337,11 @@ coherency.
 """
 function playgrain(s :: Vector{Float32}, samplingrate, gr :: Grain, speed :: Real, t, dt)
     rt, gt, dur, overlap = (gr.rt, gr.gt, gr.dur, gr.overlap)
+    fulldur = dur + 2*overlap
 
     # Account for forward as well as reverse playback. `rt` could become negative
     # if a negative value of speed was given.
-    st = mod(rt, dur) + gt
+    st = mod(rt, fulldur) + gt
 
     # `sti` is "sample time index". Limit it to a usable range.
     # `i` is its integer part and `f` its fractional part.
@@ -1349,7 +1351,7 @@ function playgrain(s :: Vector{Float32}, samplingrate, gr :: Grain, speed :: Rea
 
     # Compute the amplitude envelope. The raisedcos is symmetric,
     # so we can just use abs(rt) without worrying about wrap around.
-    a = raisedcos(abs(rt) / dur, overlap)
+    a = raisedcos(abs(rt), overlap, fulldur)
 
     # Do four point interpolation. Useful when going very slow.
     result = a * interp4(f, s[i], s[i+1], s[i+2], s[i+3])
@@ -1389,11 +1391,11 @@ For example, `raisedcos(x, 0.25)` will give you a curve that will smoothly
 rise from 0.0 at x=0.0 to 1.0 at x=0.25, stay fixed at 1.0 until x = 0.75
 and smoothly decrease to 0.0 at x=1.0.
 """
-function raisedcos(x, overlap)
+function raisedcos(x, overlap, scale=1.0f0)
     if x < overlap
-        return 0.5f0 * (cos(Float32(2 * π * (x/overlap - 0.25))) + 1.0f0)
-    elseif x > 1.0f0 - overlap
-        return 0.5f0 * (cos(Float32(2 * π * ((1.0 - x)/overlap - 0.25))) + 1.0f0)
+        return 0.5f0 * (cos(Float32(π * (x/overlap - 1.0))) + 1.0f0)
+    elseif x > scale - overlap
+        return 0.5f0 * (cos(Float32(π * ((scale - x)/overlap - 1.0))) + 1.0f0)
     else
         return 1.0f0
     end
