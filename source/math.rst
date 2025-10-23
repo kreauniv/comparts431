@@ -419,7 +419,7 @@ position in this case too, as shown below --
 
 .. tabs::
 
-    .. code-block:: python
+    .. code-tab:: python
     
         def approx_position(a, t1, t2, dt, x1, v1):
             x = x1
