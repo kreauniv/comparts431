@@ -1,19 +1,16 @@
-
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Digital filters &#8212; COMP431/ARTS431: Introduction to computer music v1 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d8a2add5" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=5cb08e4e"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -21,8 +18,9 @@
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   
@@ -35,7 +33,7 @@
           <div class="body" role="main">
             
   <section id="digital-filters">
-<h1>Digital filters<a class="headerlink" href="#digital-filters" title="Permalink to this heading">¶</a></h1>
+<h1>Digital filters<a class="headerlink" href="#digital-filters" title="Link to this heading">¶</a></h1>
 <p>We’ve so far looked at how some kinds of periodic sounds – the sine waves –
 are special, in that we hear them as “pure and uncoloured tones”. Part of the
 reason is that our ear has an amazing mechanism in the inner ear called the
@@ -57,7 +55,7 @@ the balance of various parts of the spectrum.</p>
 <p>We’ll first look at the simple mathematical structure of filters and then see
 how we can use this knowledge to understand the spectrum.</p>
 <section id="continuous-sounds">
-<h2>Continuous sounds<a class="headerlink" href="#continuous-sounds" title="Permalink to this heading">¶</a></h2>
+<h2>Continuous sounds<a class="headerlink" href="#continuous-sounds" title="Link to this heading">¶</a></h2>
 <p>If we represent a real sound pressure wave as it hits a microphone’s membrane
 or the human eardrum as a function of time <span class="math notranslate nohighlight">\(s(t)\)</span>, we can construct delayed
 versions of this sound simply as <span class="math notranslate nohighlight">\(s(t-a)\)</span> where <span class="math notranslate nohighlight">\(a\)</span> is the amount
@@ -91,7 +89,7 @@ we’re writing <span class="math notranslate nohighlight">\(=\)</span> to mean 
 have exactly the same effect on any signal that they’re applied to.”</p>
 </section>
 <section id="sampled-sounds">
-<h2>Sampled sounds<a class="headerlink" href="#sampled-sounds" title="Permalink to this heading">¶</a></h2>
+<h2>Sampled sounds<a class="headerlink" href="#sampled-sounds" title="Link to this heading">¶</a></h2>
 <p>We’re not working directly with continuous sounds though. We measure the
 pressure at the microphone membrane at regular intervals (called the “sampling
 interval”) and convert each measurement to a number and store the number in a
@@ -112,7 +110,7 @@ of our “3 second echo” like this –</p>
 \[h = (1.0 D^0 + 0.25 D^{3\times 48000})s\]</div>
 </section>
 <section id="impulse-response">
-<h2>Impulse response<a class="headerlink" href="#impulse-response" title="Permalink to this heading">¶</a></h2>
+<h2>Impulse response<a class="headerlink" href="#impulse-response" title="Link to this heading">¶</a></h2>
 <p>There is a very simple sound that can help us see what these <span class="math notranslate nohighlight">\(D\)</span> expressions mean.
 This is the “delta function” defined by –</p>
 <div class="math notranslate nohighlight">
@@ -151,7 +149,7 @@ instruments are activated by some form of “impulse”.</p>
 </div>
 </section>
 <section id="combining-filters">
-<h2>Combining filters<a class="headerlink" href="#combining-filters" title="Permalink to this heading">¶</a></h2>
+<h2>Combining filters<a class="headerlink" href="#combining-filters" title="Link to this heading">¶</a></h2>
 <p>Supposing you apply two filters in sequence, is there an “effective filter”
 that is the same as the combination? Yes indeed and it is nearly trivial to see
 how this might be so. For example, consider the two filters –</p>
@@ -207,7 +205,7 @@ delay. You’ll get the same result in both cases.</p>
 </div>
 </section>
 <section id="relationship-with-the-spectrum">
-<h2>Relationship with the spectrum<a class="headerlink" href="#relationship-with-the-spectrum" title="Permalink to this heading">¶</a></h2>
+<h2>Relationship with the spectrum<a class="headerlink" href="#relationship-with-the-spectrum" title="Link to this heading">¶</a></h2>
 <p>When we discussed the spectra of sounds, we said things like “if you apply a low
 pass filter followed by a high pass filter, you get a kind of band pass filter”,
 as though we were multiplying the spectral shape by some kind of a curve. We didn’t
@@ -247,7 +245,7 @@ parts of the spectrum using an appropriate filter.</p></li>
           
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">COMP431/ARTS431: Introduction to computer music</a></h1>
 
@@ -281,7 +279,7 @@ parts of the spectrum using an appropriate filter.</p></li>
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
@@ -289,7 +287,7 @@ parts of the spectrum using an appropriate filter.</p></li>
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 
 
@@ -304,11 +302,11 @@ parts of the spectrum using an appropriate filter.</p></li>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2024, Srikumar K. S..
+      &#169;2024, Srikumar K. S..
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |
       <a href="_sources/filters.rst.txt"

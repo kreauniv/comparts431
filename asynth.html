@@ -1,19 +1,16 @@
-
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Synthesis foundations &#8212; COMP431/ARTS431: Introduction to computer music v1 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d8a2add5" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=5cb08e4e"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -22,8 +19,9 @@
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   
@@ -36,7 +34,7 @@
           <div class="body" role="main">
             
   <section id="synthesis-foundations">
-<h1>Synthesis foundations<a class="headerlink" href="#synthesis-foundations" title="Permalink to this heading">¶</a></h1>
+<h1>Synthesis foundations<a class="headerlink" href="#synthesis-foundations" title="Link to this heading">¶</a></h1>
 <p>The appeal of music generation on a computer for a composer or performing
 musician is the illusion of unbounded control over the outcome. Assuming a
 sampling rate of 48Khz, you get to determine 28.8 million numbers which, in
@@ -84,7 +82,7 @@ to do with a periodic “vibration” – the extent of the vibration determinin
 the “volume” and the number of vibrations in a second determining the “pitch”
 of the tone produced.</p>
 <section id="periodic-circular-motion">
-<h2>Periodic circular motion<a class="headerlink" href="#periodic-circular-motion" title="Permalink to this heading">¶</a></h2>
+<h2>Periodic circular motion<a class="headerlink" href="#periodic-circular-motion" title="Link to this heading">¶</a></h2>
 <p>A qunintessential periodic motion is that of circular motion, where a chosen
 point on a spinning circle, whose position is determined by an angle <a class="footnote-reference brackets" href="#angle" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>
 repeatedly executes the same movement every time it comes around to its starting
@@ -114,7 +112,7 @@ back to 0 and does it over and over again with a chosen period. A phasor
 with a constant frequency can be represented by the equation <span class="math notranslate nohighlight">\(y =
 \text{fmod}(ft,1.0)\)</span>. We’ll denote this by <span class="math notranslate nohighlight">\(\phi(ft)\)</span>.</p>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">constant_frequency_phasor</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">phi0</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">constant_frequency_phasor</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">phi0</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">fmod</span><span class="p">(</span><span class="n">f</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="n">phi0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -124,13 +122,15 @@ easily as the function <span class="math notranslate nohighlight">\(\text{sinosc
 which the oscillator swings. When we listen to this turned into sound, <span class="math notranslate nohighlight">\(a\)</span>
 determines how loud the tone sounds – the larger the value of <span class="math notranslate nohighlight">\(a\)</span>, the
 louder it sounds.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">constant_frequency_sine_wave</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">phi0</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">constant_frequency_sine_wave</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">phi0</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">a</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">constant_frequency_phasor</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">phi0</span><span class="p">))</span>
 </pre></div>
 </div>
-<aside class="footnote brackets" id="angle" role="note">
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="angle" role="doc-footnote">
 <span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">1</a><span class="fn-bracket">]</span></span>
 <p>assuming fixed distance from the centre of the circle.</p>
+</aside>
 </aside>
 <p>It turns out that our ear recognizes a sound shaped like a sine wave as a “pure
 tone” – a tone that could be said to be devoid of all “quality” a.k.a.
@@ -139,7 +139,7 @@ perceived loudness of the tone and <span class="math notranslate nohighlight">\(
 determines its perceived “pitch”.</p>
 </section>
 <section id="towards-control">
-<h2>Towards control<a class="headerlink" href="#towards-control" title="Permalink to this heading">¶</a></h2>
+<h2>Towards control<a class="headerlink" href="#towards-control" title="Link to this heading">¶</a></h2>
 <p>Having a fixed amplitude and frequency makes for a totally boring colourless tone.
 Like Clara Rockmore, we want to be able to control – i.e. vary – both the amplitude
 and the frequency over time to …. well, make music!</p>
@@ -156,14 +156,16 @@ directly using <code class="docutils literal notranslate"><span class="pre">from
 the <a class="reference external" href="https://github.com/kreauniv/comparts431/blob/main/source/synth.py">synth.py</a> module. Install those using <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">numpy</span></code> followed
 by <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sounddevice</span></code>.</p>
 </div>
-<aside class="footnote brackets" id="dim" role="note">
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="dim" role="doc-footnote">
 <span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">2</a><span class="fn-bracket">]</span></span>
 <p>Compared to the 28.8 million dimensions mentioned earlier.</p>
 </aside>
-<aside class="footnote brackets" id="ex28" role="note">
+<aside class="footnote brackets" id="ex28" role="doc-footnote">
 <span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">3</a><span class="fn-bracket">]</span></span>
 <p>Setting aside the variations in equipment involved in the delivery
 and experience of these productions.</p>
+</aside>
 </aside>
 <div class="admonition-principle admonition">
 <p class="admonition-title"><strong>Principle</strong>:</p>
@@ -190,7 +192,7 @@ sufficiently quickly in time order gives us the illusion of a “movie”.</p>
 </div>
 </section>
 <section id="a-pure-tone-as-a-process">
-<h2>A pure tone as a process<a class="headerlink" href="#a-pure-tone-as-a-process" title="Permalink to this heading">¶</a></h2>
+<h2>A pure tone as a process<a class="headerlink" href="#a-pure-tone-as-a-process" title="Link to this heading">¶</a></h2>
 <p>We saw earlier that we perceive sinusoidal waveforms as “colourless” and “pure”
 tones.  We can mathematically calculate them as <span class="math notranslate nohighlight">\(a \sin(2\pi ft)\)</span>
 where <span class="math notranslate nohighlight">\(a\)</span> is the amplitude of the sinusoid, <span class="math notranslate nohighlight">\(f\)</span> is its “frequency”
@@ -206,7 +208,7 @@ calculation, which often does not have a closed form expression in our
 situation, is both efficiently and effectively modeled as a <strong>process</strong>.</p>
 <p>For example, here is a process which produces a sinusoidal output whose
 amplitude and frequency can be varied from moment to moment.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">sinusoid</span><span class="p">(</span><span class="n">current_phase</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">sinusoid</span><span class="p">(</span><span class="n">current_phase</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
     <span class="n">next_phase</span> <span class="o">=</span> <span class="n">current_phase</span> <span class="o">+</span> <span class="n">f</span> <span class="o">*</span> <span class="n">dt</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">next_phase</span><span class="p">,</span> <span class="n">a</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">current_phase</span><span class="p">))</span>
 </pre></div>
@@ -215,7 +217,7 @@ amplitude and frequency can be varied from moment to moment.</p>
 We’ll need a harness to <em>run</em> such a process to actually produce the sinusoid
 wave as a result. We can do that by calling the state transforming function
 once for every time step like this –</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="n">process</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">samplingrate</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="n">process</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">samplingrate</span><span class="p">):</span>
     <span class="n">t</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">a</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="n">params</span>
@@ -236,17 +238,17 @@ that represents the process while using variables closed over by the function
 that internally maintain state that a user of such a process does not care about.
 In that mindset, we’d write the same process function above as a “process constructor”
 like this –</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">constant</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">constant</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; A process that always outputs the same value. &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">tick</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tick</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">value</span>
     <span class="k">return</span> <span class="n">tick</span>
 
-<span class="k">def</span> <span class="nf">sinosc</span><span class="p">(</span><span class="n">amp</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">initial_phase</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sinosc</span><span class="p">(</span><span class="n">amp</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">initial_phase</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
     <span class="c1"># Prepare the initial state of the process.</span>
     <span class="n">phase</span> <span class="o">=</span> <span class="n">initial_phase</span>
 
-    <span class="k">def</span> <span class="nf">tick</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tick</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
         <span class="c1"># 1. State closed over is indicated using `nonlocal`</span>
         <span class="k">nonlocal</span> <span class="n">phase</span>
 
@@ -273,9 +275,9 @@ common for all processes. In the above example, it is further possible to
 split it into two processes - one that computes the <code class="docutils literal notranslate"><span class="pre">phase</span></code> as a pseudo
 time whose pace can vary over real time, and a sinusoid computed using that
 time. So we can express it as –</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">phasor</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">initial_phase</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">phasor</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">initial_phase</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
     <span class="n">phase</span> <span class="o">=</span> <span class="n">initial_phase</span>
-    <span class="k">def</span> <span class="nf">tick</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tick</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
         <span class="k">nonlocal</span> <span class="n">phase</span>      <span class="c1">#  1. Declare state</span>
         <span class="n">f</span> <span class="o">=</span> <span class="n">freq</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>     <span class="c1">#  2. Compute inputs</span>
         <span class="n">v</span> <span class="o">=</span> <span class="n">phase</span>           <span class="c1">#  3. Compute output</span>
@@ -283,8 +285,8 @@ time. So we can express it as –</p>
         <span class="k">return</span> <span class="n">v</span>
     <span class="k">return</span> <span class="n">tick</span>
 
-<span class="k">def</span> <span class="nf">sinosc</span><span class="p">(</span><span class="n">amp</span><span class="p">,</span> <span class="n">phase</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">tick</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sinosc</span><span class="p">(</span><span class="n">amp</span><span class="p">,</span> <span class="n">phase</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tick</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
         <span class="c1"># 1. We don&#39;t have additional state beyond what</span>
         <span class="c1">#    phase already stores. So no `nonlocal` here.</span>
 
@@ -318,7 +320,7 @@ that take <code class="docutils literal notranslate"><span class="pre">t</span><
 </div>
 </section>
 <section id="some-processes-defined-in-synth-py">
-<h2>Some processes defined in <code class="docutils literal notranslate"><span class="pre">synth.py</span></code><a class="headerlink" href="#some-processes-defined-in-synth-py" title="Permalink to this heading">¶</a></h2>
+<h2>Some processes defined in <code class="docutils literal notranslate"><span class="pre">synth.py</span></code><a class="headerlink" href="#some-processes-defined-in-synth-py" title="Link to this heading">¶</a></h2>
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">konst(k)</span></code> This is what we called <code class="docutils literal notranslate"><span class="pre">constant</span></code> above.
 This process always produces the same value <code class="docutils literal notranslate"><span class="pre">k</span></code> at all
@@ -376,7 +378,7 @@ to a value in the range <span class="math notranslate nohighlight">\([b1,b2]\)</
 <p>See <code class="docutils literal notranslate"><span class="pre">synth.py</span></code> code for some other processes.</p>
 </section>
 <section id="loading-and-playing-a-sound-from-a-file">
-<h2>Loading and playing a sound from a file<a class="headerlink" href="#loading-and-playing-a-sound-from-a-file" title="Permalink to this heading">¶</a></h2>
+<h2>Loading and playing a sound from a file<a class="headerlink" href="#loading-and-playing-a-sound-from-a-file" title="Link to this heading">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">synth.py</span></code> module supports playing back a raw audio file. Confusingly
 enough, the music community also refers to a short audio snippet, usually
 capturing a single “atomic” sound intended to be composed with others, also as
@@ -424,7 +426,7 @@ factors <code class="docutils literal notranslate"><span class="pre">[0.25,</spa
           
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">COMP431/ARTS431: Introduction to computer music</a></h1>
 
@@ -459,7 +461,7 @@ factors <code class="docutils literal notranslate"><span class="pre">[0.25,</spa
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
@@ -467,7 +469,7 @@ factors <code class="docutils literal notranslate"><span class="pre">[0.25,</spa
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
 
 
@@ -482,11 +484,11 @@ factors <code class="docutils literal notranslate"><span class="pre">[0.25,</spa
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2024, Srikumar K. S..
+      &#169;2024, Srikumar K. S..
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
       
       |
       <a href="_sources/asynth.rst.txt"
