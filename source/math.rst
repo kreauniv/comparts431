@@ -286,12 +286,12 @@ be written as a summation loop in python.
     .. code-tab:: python
 
         def approx_integral(f, x1, x2, dx):
-            return sum(f(x) * dx for x in arange(x1, x2, dx))
+            return sum(f(x) * dx for x in arange(x1+dx/2, x2, dx))
 
     .. code-tab:: julia
 
         approx_integral(f, x1, x2, dx) =
-            sum(f(x) * dx for x in x1:dx:(x2-dx))
+            sum(f(x) * dx for x in (x1+dx/2):dx:(x2-dx/2))
 
 Derivatives of transformed functions
 ------------------------------------
