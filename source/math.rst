@@ -28,19 +28,28 @@ input :math:`x`, we write :math:`y = f(x)`. Some examples are shown below.
 In a programming language like python, you can express these functions
 in more or less the same form, apart from syntax.
 
-.. code-block:: python
+.. tabs::
 
-    def f1(x):
-        return x * x
+    .. code-tab:: python
 
-    def f2(x):
-        return 1 - x * x
+        def f1(x):
+            return x * x
 
-    def f3(x):
-        return math.abs(x)
+        def f2(x):
+            return 1 - x * x
 
-    def f4(x):
-        return x**3 - 2 * x**2 + x + 1
+        def f3(x):
+            return math.abs(x)
+
+        def f4(x):
+            return x**3 - 2 * x**2 + x + 1
+
+    .. code-tab:: julia
+
+        f1(x) = x * x
+        f2(x) = 1 - x * x
+        f3(x) = abs(x)
+        f4(x) = x^3 - 2 * x^2 + x + 1
 
 Linear interpolation
 --------------------
@@ -205,17 +214,26 @@ is a tiny fraction of a little bit of :math:`x`!!
 
 This calculation is easily translated into a python program as follows --
 
-.. code-block:: python
+.. tabs::
 
-    def approx_derivative(f, x, dx):
-        df = f(x + dx) - f(x)
-        return df/dx
+    .. code-tab:: python
 
-    def better_approx_derivative(f, x, dx):
-        df = f(x + 0.5 * dx) - f(x - 0.5 * dx)
-        # This centers the estimate of the derivative
-        # about the input x.
-        return df/dx
+        def approx_derivative(f, x, dx):
+            df = f(x + dx) - f(x)
+            return df/dx
+
+        def better_approx_derivative(f, x, dx):
+            df = f(x + 0.5 * dx) - f(x - 0.5 * dx)
+            # This centers the estimate of the derivative
+            # about the input x.
+            return df/dx
+
+    .. code-tab:: julia
+
+        approx_derivative(f, x, dx) = (f(x + dx) - f(x)) / dx
+        better_approx_derivative(f, x, dx) =
+            ((f(x + 0.5*dx) - f(x - 0.5*dx)) / dx
+
 
 Going the other way, if we add lots of "little bits of :math:`x`" together,
 we expect to get .... :math:`x`!! This computation of "adding lots of little
@@ -263,10 +281,17 @@ To put it a bit more explicitly in terms of the notion of "derivative",
 Conversely to the derivative, the integral :math:`\int_{x_1}^{x_2}f(x)dx` can
 be written as a summation loop in python.
 
-.. code-block:: python
+.. tabs::
 
-    def approx_integral(f, x1, x2, dx):
-        return sum(f(x) * dx for x in arange(x1, x2, dx))
+    .. code-tab:: python
+
+        def approx_integral(f, x1, x2, dx):
+            return sum(f(x) * dx for x in arange(x1, x2, dx))
+
+    .. code-tab:: julia
+
+        approx_integral(f, x1, x2, dx) =
+            sum(f(x) * dx for x in x1:dx:(x2-dx))
 
 Derivatives of transformed functions
 ------------------------------------
@@ -315,19 +340,36 @@ the input to :math:`f`, which will then change by :math:`f'(g(x))g'(x)dx`.
 If we're to write that as a program, we can write it in two ways that should
 yield approximately the same answers (subject to numerical errors).
 
-.. code-block:: python
+.. tabs::
 
-    def direct_derivative_of_composition(f, g, x, dx):
-        # To compute derivative of f(g(x)).
-        dg = g(x+dx) - g(x)
-        df = f(g(x) + dg) - f(g(x))
-        return df/dx
+    .. code-tab:: python
 
-    def chain_rule(f, g, x, dx):
-        gprime = approx_derivative(g, x, dx)
-        dg = gprime * dx
-        fprime = approx_derivative(f, g(x), dg)
-        return fprime * gprime 
+        def direct_derivative_of_composition(f, g, x, dx):
+            # To compute derivative of f(g(x)).
+            dg = g(x+dx) - g(x)
+            df = f(g(x) + dg) - f(g(x))
+            return df/dx
+
+        def chain_rule(f, g, x, dx):
+            gprime = approx_derivative(g, x, dx)
+            dg = gprime * dx
+            fprime = approx_derivative(f, g(x), dg)
+            return fprime * gprime 
+
+    .. code-tab:: julia
+
+        function direct_derivative_of_composition(f, g, x, dx)
+            dg = g(x+dx) - d(x)
+            df = f(g(x) + dg) - f(g(x))
+            df/dx
+        end
+
+        function chain_rule(f, g, x, dx):
+            gprime = approx_derivative(g, x, dx)
+            dg = gprime * dx
+            fprime = approx_derivative(f, g(x), dg)
+            fprime * gprime
+        end
 
 Basic dynamics
 --------------
@@ -348,13 +390,25 @@ program -- which basically adds up all the little bits of changes to the
 position between times :math:`t_1` and :math:`t_2` to arrive at the final
 position, given the starting position at :math:`t_1` to be :math:`x_1`.
 
-.. code-block:: python
+.. tabs::
+
+    .. code-tab:: python
     
-    def approx_position(v, t1, t2, dt, x1):
-        x = x1
-        for t in arange(t1, t2, dt):
-            x = x + v(t) * dt
-        return x
+        def approx_position(v, t1, t2, dt, x1):
+            x = x1
+            for t in arange(t1, t2, dt):
+                x = x + v(t) * dt
+            return x
+
+    .. code-tab:: julia
+
+        function approx_position(v, t1, t2, dt, x1)
+            x = x1
+            for t in t1:dt:(t2-dt)
+                x = x + v(t) * dt
+            end
+            x
+        end
 
 One may then also ask "how do we describe :math:`v` changing with time?".
 If :math:`v` is itself changing at a constant rate :math:`a`, we write
@@ -363,30 +417,61 @@ point in time, we need to know both its starting position *and* its
 starting velocity. We can use a similar approach to find out the approximate
 position in this case too, as shown below --
 
-.. code-block:: python
-    
-    def approx_position(a, t1, t2, dt, x1, v1):
-        x = x1
-        v = v1
-        for t in arange(t1, t2, dt):
-            # The current velocity is v, so x changes a little bit.
-            x = x + v * dt
-            # The current acceleration is a(t), and so the velocity also
-            # changes a little bit a little later.
-            v = v + a(t) * dt
-        return x
+.. tabs::
 
-    # A slightly refined version of the above
-    def refined_approx_position(a, t1, t2, dt, x1, v1):
-        x = x1
-        v = v1
-        for t in arange(t1, t2, dt):
-            v_now = v
-            v_little_later = v + a(t) * dt
-            v_mean = 0.5 * (v_now + v_little_later)
-            x = x + v_mean * dt
-            v = v_little_later
-        return x
+    .. code-block:: python
+    
+        def approx_position(a, t1, t2, dt, x1, v1):
+            x = x1
+            v = v1
+            for t in arange(t1, t2, dt):
+                # The current velocity is v, so x changes a little bit.
+                x = x + v * dt
+                # The current acceleration is a(t), and so the velocity also
+                # changes a little bit a little later.
+                v = v + a(t) * dt
+            return x
+
+        # A slightly refined version of the above
+        def refined_approx_position(a, t1, t2, dt, x1, v1):
+            x = x1
+            v = v1
+            for t in arange(t1, t2, dt):
+                v_now = v
+                v_little_later = v + a(t) * dt
+                v_mean = 0.5 * (v_now + v_little_later)
+                x = x + v_mean * dt
+                v = v_little_later
+            return x
+
+    .. code-tab:: julia
+
+         function approx_position(a, t1, t2, dt, x1, v1)
+            x = x1
+            v = v1
+            for t in t1:dt:(t2-dt)
+                # The current velocity is v, so x changes a little bit.
+                x = x + v * dt
+                # The current acceleration is a(t), and so the velocity also
+                # changes a little bit a little later.
+                v = v + a(t) * dt
+            return x
+        end
+
+        # A slightly refined version of the above
+        function refined_approx_position(a, t1, t2, dt, x1, v1)
+            x = x1
+            v = v1
+            for t in t1:dt:(t2-dt)
+                v_now = v
+                v_little_later = v + a(t) * dt
+                v_mean = 0.5 * (v_now + v_little_later)
+                x = x + v_mean * dt
+                v = v_little_later
+            return x
+        end
+
+       
 
 One interesting case is a system that behaves according to :math:`dx/dt = kx`
 for some constant :math:`k`. In this system, the speed with which :math:`x`
@@ -399,15 +484,28 @@ The solution of that dynamical equation is the "exponential function":
 :math:`x = e^{kt}`. To an approximation, you can calculate this function
 by adding up little bits of :math:`x` like this --
 
-.. code-block:: python
+.. tabs::
 
-    def approx_exponential(t, k, dt):
-        x = 1.0 # The value at t = 0 is 1.0
-        for tstep in arange(0.0, t, dt):
-            # add all the little bits of changes
-            # to x according to dx = kx dt
-            x = x + k * x * dt
-        return x
+    .. code-tab:: python
+
+        def approx_exponential(t, k, dt):
+            x = 1.0 # The value at t = 0 is 1.0
+            for tstep in arange(0.0, t, dt):
+                # add all the little bits of changes
+                # to x according to dx = kx dt
+                x = x + k * x * dt
+            return x
+
+    .. code-tab:: julia
+
+        function approx_exponential(t, k, dt)
+            x = 1.0 # The value at t = 0 is 1.0
+            for tstep in 0.0:dt:(t-dt)
+                # add all the little bits of changes
+                # to x according to dx = kx dt
+                x = x + k * x * dt
+            return x
+        end
 
 .. note:: The above code is for illustration only and we wouldn't want to
    calculate the exponential function this way due to possible numerical errors

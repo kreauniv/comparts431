@@ -21,8 +21,7 @@ async function makeWorkletNode(context, modelFn) {
         }
 
         signalConstructor() {
-            let w = this;
-            return (${modelFnCode})();
+            return (${modelFnCode})(this);
         }
 
         process(inputs, outputs, parameters) {
@@ -72,7 +71,7 @@ async function makeWorkletNode(context, modelFn) {
 
 async function init() {
     let context = new AudioContext();
-    function model() {
+    function model(w) {
         let s1 = sinosc(konst(0.25), phasor(konst(400)));
         let s2 = sinosc(konst(0.25), phasor(konst(408)));
         return mix2(1.0, s1, 1.0, s2);

@@ -1,30 +1,35 @@
 using Random
 import PortAudio as Au
+using SampledSignals
+using FileIO: load, save
+using LibSndFile
+
 
 """
     abstract type Signal end
 
-A `Signal` represents a process that can be asked for
-a value for every tick of a clock. We use it here to
-represent processes that produce audio and control
+A `Signal` represents a process that can be asked for a value for every tick of
+a clock. We use it here to represent processes that produce audio and control
 signals to participate in a "signal flow graph".
 
-To construct signals and to wire them up in a graph,
-use the constructor functions provided rather than
-the structure constructors directly.
+To construct signals and to wire them up in a graph, use the constructor
+functions provided rather than the structure constructors directly.
 
-The protocol for a signal is given by two functions
-with the following signatures --
+The protocol for a signal is given by two functions with the following
+signatures --
 
 - `done(s :: S, t, dt) where {S <: Signal} :: Bool`
 - `value(s :: S, t, dt) where {S <: Signal} :: Float32`
 
-The renderer will call `done` to check whether a signal
-has completed and if not, will call `value` to retrieve the
-next value.
+The renderer will call `done` to check whether a signal has completed and if
+not, will call `value` to retrieve the next value. The contract with each
+signal type is that even if `value` is called for a time after the signal is
+complete, it should return sample value 0.0f0 or a value appropriate for the
+type of signal. This is so that `done` can be called per audio frame rather
+than per sample.
 
-Addition, subtraction and multiplication operations are
-available to combine signals and numbers.
+Addition, subtraction and multiplication operations are available to combine
+signals and numbers.
 
 ## Signal constructors
 
@@ -36,7 +41,7 @@ available to combine signals and numbers.
 - `line(v1, duration_secs, v2)`
 - `expinterp(v1, duration_secs, v2)`
 - `expdecay(rate)`
-- `adsr(alevel, asecs, dsecs, suslevel, sussecs, relses)`
+- `adsr(alevel, asecs, dsecs, suslevel, sussecs, relsecs)`
 - `sample(samples; looping, loopto)`
 - `wavetable(table, amp, phasor)`
 - `waveshape(f, signal)`
@@ -144,7 +149,7 @@ done(s :: Konst, t, dt) = false
 
 Makes a constant valued signal.
 """
-function konst(v::Real)
+function konst(v::T) where {T <: Real}
     Konst(Float32(v))
 end
 
@@ -164,16 +169,16 @@ function done(s :: Phasor{F}, t, dt) where {F <: Signal}
 end
 
 """
-    phasor(f :: Real, phi0 = 0.0) = Phasor(konst(f), phi0)
-    phasor(f :: F, phi0 = 0.0) where {F <: Signal} = Phasor(f, phi0)
+    phasor(f :: Real, phi0 = 0.0) = Phasor(konst(f), Float64(phi0))
+    phasor(f :: F, phi0 = 0.0) where {F <: Signal} = Phasor(f, Float64(phi0))
 
 A "phasor" is a signal that goes from 0.0 to 1.0 linearly and then
 loops back to 0.0. This is useful in a number of contexts including
 wavetable synthesis where the phasor can be used to lookup the
 wavetable.
 """
-phasor(f :: Real, phi0 = 0.0) = Phasor(konst(f), phi0)
-phasor(f :: F, phi0 = 0.0) where {F <: Signal} = Phasor(f, phi0)
+phasor(f :: T, phi0 :: Float64 = 0.0) where {T <: Real} = Phasor(konst(f), phi0)
+phasor(f :: F, phi0 :: Float64 = 0.0) where {F <: Signal} = Phasor(f, phi0)
 
 mutable struct SinOsc{Mod <: Signal, Ph <: Signal} <: Signal
     modulator :: Mod
@@ -290,7 +295,7 @@ to be valid.
 function expinterp(v1 :: Real, duration_secs :: Real, v2 :: Real)
     @assert v1 > 0.0
     @assert v2 > 0.0
-    @assert durtation_secs > 0.0
+    @assert duration_secs > 0.0
     Expinterp(Float32(v1), Float32(duration_secs), Float32(v2), log(Float32(v1)), log(Float32(v2)), log(Float32(v2/v1)))
 end
 
@@ -366,7 +371,7 @@ function adsr(
     ADSR(Float32(alevel), Float32(asecs), Float32(dsecs), Float32(suslevel), Float32(sussecs), Float32(relsecs),
          0.0f0, Float32(log2(alevel)),
          Float32(alevel/asecs),
-         Float32(log2(suslevel/alevel)),
+         Float32(log2(suslevel/alevel)/dsecs),
          Float32(-1.0/relsecs),
          Float32(asecs),
          Float32(asecs + dsecs),
@@ -385,12 +390,12 @@ function value(s :: ADSR, t, dt)
         s.v += s.dv_attack * dt
     elseif t < s.t2
         v = 2 ^ s.logv
-        s.logv -= s.dlogv_decay * dt
+        s.logv += s.dlogv_decay * dt
     elseif t < s.t3
         v = s.sustain_level
     else
         v = 2 ^ s.logv
-        s.logv -= s.dlogv_release
+        s.logv += s.dlogv_release * dt
     end
     return v
 end
@@ -417,6 +422,11 @@ but can be asked to loop back to a specified point after that.
 """
 function sample(samples :: Vector{Float32}; looping = false, loopto = 1.0, samplingrate=48000.0f0) 
     Sample(samples, length(samples), 0, looping, 1 + floor(Int, loopto * length(samples)), samplingrate)
+end
+
+function sample(filename :: AbstractString; looping = false, loopto = 1.0, samplingrate=48000.0f0)
+    buf = load(filename)
+    Sample(Float32.(buf[:,1].data); looping, loopto, samplingrate)
 end
 
 function done(s :: Sample, t, dt)
@@ -446,7 +456,7 @@ mutable struct Wavetable{Amp <: Signal, Ph <: Signal} <: Signal
     phase :: Ph
 end
 
-done(s :: Wavetable, t, dt) = false
+done(s :: Wavetable, t, dt) = done(s.amp, t, dt) || done(s.phase, t, dt)
 
 function value(s :: Wavetable, t, dt)
     p = value(s.phase, t, dt)
@@ -493,7 +503,7 @@ Utility function to construct a table for use with `wavetable`.
 `f` is passed values in the range [0.0,1.0] to construct the
 table of the given length `L`.
 """
-maketable(L :: Int, f) = [f(Float32(i/L)) for i in 0:(L-1)]
+maketable(f, L :: Int) = [f(Float32(i/L)) for i in 0:(L-1)]
 
 """
     mutable struct Clock{S <: Signal} <: Signal
@@ -537,9 +547,58 @@ function value(c :: Clock, t, dt)
     return v
 end
 
-mutable struct Seq{Sch <: Signal} <: Signal
+
+struct Sched{Clk <: Signal} <: Signal
+    clock :: Clk
+    t :: Float64
+    chan :: Channel{Tuple{Float64,Signal}}
+    voices :: Vector{Tuple{Float64, Signal}}
+    realtime :: Vector{Float64}
+end
+
+"""
+"""
+function sched(clk :: Clk) :: Sched{Clk} where {Clk <: Signal}
+    Sched(clk, 0.0, Channel{Tuple{Float64,Signal}}(), [], [])
+end
+
+function done(s :: Sched{Clk}, t, dt) where {Clk <: Signal}
+    inactive = findall(tv -> done(tv[2],t,dt), s.voices)
+    deleteat!(s.voices, inactive)
+    deleteat!(s.realtime, inactive)
+    done(s.clock, t, dt)
+end
+
+function value(s :: Sched{Clk}, t, dt) where {Clk <: Signal}
+    while isready(s.chan)
+        push!(s.voices, take!(s.chan))
+        push!(s.realtime, 0.0)
+    end
+    s = 0.0f0
+
+    ct = s.t = value(s.clock, t, dt)
+
+    for (i,(tv,v)) in enumerate(voices)
+        if ct < tv
+            continue
+        end
+        if s.realtime[i] < dt
+            s.realtime[i] = t
+        end
+        # The dispatch here for v will be dynamic since
+        # we don't know at this point what type of signal
+        # was received on the channel. Not sure of perf
+        # consequences at the moment.
+        s += value(v, t - s.realtime[i], dt)
+    end
+
+    return s
+end
+
+
+mutable struct Seq{Sch <: Signal, T <: Tuple{Float64, Signal}} <: Signal
     clock :: Sch
-    triggers :: Vector{Tuple{Float64,Signal}}
+    triggers :: Vector{T}
     ts :: Vector{Float64}
     realts :: Vector{Float64}
     ti :: Int
@@ -552,7 +611,7 @@ end
 Sequences the given signals in a virtual timeline determined by the given
 clock. Use `clock_bpm` to make such a clock.
 """
-function seq(clock :: Sch, triggers :: Vector{Tuple{Float64,Signal}}) where {Sch <: Signal}
+function seq(clock :: Sch, triggers :: Vector{T}) where {Sch <: Signal, T <: Tuple{Float64,Signal}}
     Seq(clock,
         triggers,
         accumulate(+, first.(triggers)),
@@ -574,7 +633,7 @@ function value(s :: Seq, t, dt)
     end
     for i in s.active_i:min(length(s.triggers), s.ti)
         if i == s.active_i
-            if done(s.triggers[i][2], t = s.realts[i], dt)
+            if done(s.triggers[i][2], t - s.realts[i], dt)
                 s.active_i += 1
             else
                 v += value(s.triggers[i][2], t - s.realts[i], dt)
@@ -699,37 +758,6 @@ function value(s :: Curve, t, dt)
     end
 end
 
-mutable struct SegSeq <: Signal
-    dur :: Float64
-    mkseg :: Function
-    segix :: Int
-    currseg :: Seg
-    segstart :: Float64
-    segend :: Float64
-end
-
-"""
-    segseq(dur :: Float64, mkseg :: Function)
-
-Instead of specifying a fixed list of segments, you can use `segseq`
-to give a function that will be called to make segments on the fly
-as needed. The whole curve will last for the given `dur`.
-
-`mkseg` takes the form `mkseg(index::Int, t, dt) :: Seg` and is
-expected to keep producing segments until the curve's duration ends.
-"""
-segseq(dur :: Float64, mkseg :: Function) = SegSeq(dur, mkseg, 0, Seg(0.0, 0.0), 0.0, 0.0)
-done(s :: SegSeq, t, dt) = t > s.dur
-function value(s :: SegSeq, t, dt)
-    while t >= s.segend
-        s.segix += 1
-        s.currseg = mkseg(s.segix, t, dt)
-        s.segstart = t
-        s.segend = t + s.currseg.dur
-    end
-    s.currseg.interp((t - s.segstart) / s.currseg.dur)
-end
-
 """
     render(s :: S, dur_secs; maxamp=0.5) where {S <: Signal}
 
@@ -749,7 +777,7 @@ function render(s :: S, dur_secs; sr=48000, normalize=false, maxamp=0.5) where {
             break
         end
     end
-    return if normalize rescale(maxamp, result) else result end
+    return SampleBuf(if normalize rescale(maxamp, result) else result end, sr)
 end
 
 """
@@ -760,9 +788,7 @@ Renders and writes raw `Float32` values to the given file.
 function write(filename :: AbstractString, model::Sig, duration_secs :: AbstractFloat; sr=48000, maxamp=0.5) where {Sig <: Signal}
     s = render(model, duration_secs; sr, maxamp)
     s = rescale(maxamp, s)
-    open(filename, "w") do f
-        Base.write(f, s)
-    end
+    save(filename, s)
 end
 
 """
@@ -1153,7 +1179,7 @@ end
 """
 Can be used to hide an underlying signal via dynamic dispatch.
 """
-struct Gen
+struct Gen <: Signal
     done :: Function
     value :: Function
 end
@@ -1166,34 +1192,8 @@ function Gen(s :: S) where {S <: Signal}
     return Gen(gdone, gvalue)
 end
 
-function dyn(fn)
-    voices = []
-    next_t = 0.0
-    ended = false
-
-    function done(t, dt)
-        if ended return true end
-        if t >= next_t
-            next_t, nextvoices = fn(t, dt)
-            if next_t < t && length(nextvoices) == 0
-                ended = true
-                return true
-            else
-                append!(voices, nextvoices)
-            end
-        end
-        return false
-    end
-
-    function value(t, dt)
-
-
-    end
-end
-
-
-mutable struct Feedback
-    s
+mutable struct Feedback <: Signal
+    s :: Union{Nothing,Signal}
     last_t :: Float64
     calculating_t :: Float64
     last_val :: Float32
@@ -1314,6 +1314,7 @@ function isgrainplaying(gr :: Grain)
 end
 
 function done(g :: Granulation, t, dt)
+    cleanupdeadvoices!(g.grains)
     false
 end
 
@@ -1346,12 +1347,14 @@ function value(g :: Granulation, t, dt)
     end
 
     # Sum all playing grains
-    s = 0.0
+    s = 0.0f0
     tstep = speed / g.samplingrate
     for gr in g.grains
         s += playgrain(g.samples, g.samplingrate, gr, t, dt)
         # Update the grain's clock.
-        gr.rt += tstep * gr.speedfactor
+        if gr.delay < 0.0
+            gr.rt += tstep * gr.speedfactor
+        end
         gr.delay -= dt
     end
 
@@ -1478,6 +1481,40 @@ function startaudio(callback; blocksize=64)
     return () -> put!(wq, Val(:done))
 end
 
+function synthesizer(commands::Channel{Signal}; blocksize=64)
+    function callback(sample_rate, rq, wq)
+        #println("In callback $sample_rate, $rq, $wq")
+        dt = 1.0 / sample_rate
+        t = 0.0
+        endmarker = Val(:done)
+        voices = Vector{Tuple{Float64,Signal}}()
+        while true
+            buf = take!(rq)
+            if buf == endmarker
+                break
+            end
+            while isready(commands)
+                sig = take!(commands)
+                push!(voices, (t,sig))
+            end
+            fill!(buf, 0.0f0)
+            for i in eachindex(buf)
+                for (vt,v) in voices
+                    buf[i] += value(v, t-vt, dt)
+                end
+                t += dt
+            end
+            put!(wq, buf)
+            filter!(voices) do (vt,v)
+                !done(v, t-vt, dt)
+            end
+        end
+        put!(wq, endmarker)
+        #println("Audio generator done!")
+    end
+    startaudio(callback; blocksize)
+end
+
 function play(signal, duration_secs; blocksize=64)
     function callback(sample_rate, rq, wq)
         #println("In callback $sample_rate, $rq, $wq")
@@ -1503,3 +1540,19 @@ function play(signal, duration_secs; blocksize=64)
     startaudio(callback; blocksize)
 end
 
+function note(amp, freq, dur)
+    env1 = adsr(amp * 2.0, 0.01, 0.05, amp, dur, 0.2) 
+    env2 = adsr(amp * 2.0, 0.01, 0.05, amp, dur, 0.1) 
+    sinosc(env1, phasor(freq, 0.0)) + 0.5 * sinosc(env2, phasor(freq * 2.0, 0.0)) 
+end
+
+function note(amp, freq, dur, spectrum)
+    envs = [adsr(a * amp * 2.0, 0.01, 0.05, a * amp, dur, 0.2 / f) for (a,f) in spectrum]
+    phasors = [phasor(freq * f) for (a,f) in spectrum]
+    oscs = sinosc.(envs, phasors)
+    return sum(oscs)
+end
+
+function noteseq(tempo, amp, freqs, dur)
+    amp * seq(clock_bpm(tempo), [(1.0, note(0.5, f, dur)) for f in freqs])
+end

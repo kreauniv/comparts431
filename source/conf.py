@@ -17,12 +17,12 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'COMP431/ARTS431: Introduction to computer music'
-copyright = '2024, Srikumar K. S.'
-author = 'Srikumar K. S.'
+project = "COMP431/ARTS431: Introduction to computer music"
+copyright = "2024, Srikumar K. S."
+author = "Srikumar K. S."
 
 # The full version, including alpha/beta/rc tags
-release = 'v1'
+release = "v1"
 
 
 # -- General configuration ---------------------------------------------------
@@ -31,15 +31,16 @@ release = 'v1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.todo',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.autosectionlabel',
+    "sphinx.ext.todo",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.autosectionlabel",
+    "sphinx_tabs.tabs",
     #'rst2pdf.pdfbuilder'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -52,43 +53,41 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = "alabaster"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 
 # -- Extension configuration -------------------------------------------------
-pygments_style = 'xcode'
+pygments_style = "xcode"
 
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
-latex_engine = 'xelatex'
+latex_engine = "xelatex"
 latex_elements = {
-    'fontpkg': r'''
+    "fontpkg": r"""
 \setmainfont{DejaVu Serif}
 \setsansfont{DejaVu Sans}
 \setmonofont{DejaVu Sans Mono}
-''',
-    'preamble': r'''
+""",
+    "preamble": r"""
 \usepackage[titles]{tocloft}
 \cftsetpnumwidth {1.25cm}\cftsetrmarg{1.5cm}
 \setlength{\cftchapnumwidth}{0.75cm}
 \setlength{\cftsecindent}{\cftchapnumwidth}
 \setlength{\cftsecnumwidth}{1.25cm}
-''',
-    'fncychap': r'\usepackage[Bjornstrup]{fncychap}',
-    'printindex': r'\footnotesize\raggedright\printindex',
+""",
+    "fncychap": r"\usepackage[Bjornstrup]{fncychap}",
+    "printindex": r"\footnotesize\raggedright\printindex",
 }
-latex_show_urls = 'footnote'
-latex_extensions = {
-        'papersize': 'a4paper'
-        }
+latex_show_urls = "footnote"
+latex_extensions = {"papersize": "a4paper"}
 
 rst_prolog = """
 .. role:: rkt(code)
@@ -98,8 +97,6 @@ rst_prolog = """
 
 numfig = True
 
-exclude_patterns = ['excluded/*']
+exclude_patterns = ["excluded/*"]
 
-#pdf_documents = [('index', u'rst2pdf', u'Sample rst2pdf doc', u'Srikumar K. S.'),]
-
-
+# pdf_documents = [('index', u'rst2pdf', u'Sample rst2pdf doc', u'Srikumar K. S.'),]

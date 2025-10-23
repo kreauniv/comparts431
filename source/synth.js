@@ -323,3 +323,27 @@ function seq(clock, items) {
         }
     };
 }
+
+function player() {
+    let voicequeue = [];
+    return {
+        done(t, dt) {
+            while (voicequeue.length > 0 && voicequeue[0].done(t, dt)) {
+                voicequeue.shift();
+            }
+            return false;
+        },
+        value(t, dt, w) {
+            let s = 0.0;
+            for (let v of voicequeue) {
+                s += v.value(t, dt, w);
+            }
+            return s;
+        },
+        play(model) {
+            voicequeue.push(model);
+        }
+    };
+}
+
+
