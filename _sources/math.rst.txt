@@ -446,7 +446,7 @@ position in this case too, as shown below --
 
     .. code-tab:: julia
 
-         function approx_position(a, t1, t2, dt, x1, v1)
+        function approx_position(a, t1, t2, dt, x1, v1)
             x = x1
             v = v1
             for t in t1:dt:(t2-dt)
